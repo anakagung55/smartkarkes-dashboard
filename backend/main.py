@@ -309,3 +309,65 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         }
     except Exception as e:
         return {"error": str(e)}
+
+@app.post("/api/stats")
+def get_stats_detail(payload: dict = {}):
+    try:
+        df_merah = pd.read_csv(SHEET_CSV_URL)
+        df_merah.columns = df_merah.columns.str.strip().str.replace('\ufeff', '')
+        
+        # Hitung ringkasan status merah detail
+        total_rows = len(df_merah)
+        
+        # Kolom verifikasi & gejala
+        h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
+        d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
+        g_col = next((c for c in df_merah.columns if 'gejala' in c.lower()), None)
+        
+        # Hitung tervalidasi / tidak respons
+        terverifikasi = 0
+        t_respon = 0
+        t_divalidasi = 0
+        
+        gejala_list = []
+        diag_list = []
+        tindak_lanjut_list = []
+        
+        for _, r in df_merah.iterrows():
+            status_v = str(r.get(h_col, '')) if h_col else ''
+            if 'tidak respons' in status_v.lower():
+                t_respon += 1
+            elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower():
+                t_divalidasi += 1
+            else:
+                terverifikasi += 1
+                
+            if g_col:
+                g_val = str(r.get(g_col, '')).strip()
+                if g_val and g_val not in ['-', '', 'nan']:
+                    gejala_list.append(g_val)
+                    
+            if d_col:
+                d_val = str(r.get(d_col, '')).strip()
+                if d_val and d_val not in ['-', '', 'nan']:
+                    diag_list.append(d_val)
+                    
+            if h_col:
+                tindak_lanjut_list.append(status_v if status_v else 'Tidak dilakukan verifikasi')
+
+        top_gejala = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(gejala_list).value_counts().head(10).items()]
+        top_diag = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(diag_list).value_counts().head(10).items()]
+        status_tindak = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(tindak_lanjut_list).value_counts().head(10).items()]
+
+        return {
+            "total_merah": total_rows,
+            "terverifikasi": terverifikasi,
+            "tidak_respon": t_respon,
+            "tidak_dilakukan": t_divalidasi,
+            "cakupan_pct": round((terverifikasi / total_rows * 100), 2) if total_rows > 0 else 0.0,
+            "top_gejala": top_gejala,
+            "top_diagnosis": top_diag,
+            "status_tindak_lanjut": status_tindak
+        }
+    except Exception as e:
+        return {"error": str(e)}
