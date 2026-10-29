@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from dotenv import load_dotenv
 from typing import Optional
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -310,64 +311,131 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
     except Exception as e:
         return {"error": str(e)}
 
+class FilterRequest(BaseModel):
+    gejala: str | None = None
+    diagnosis: str | None = None
+    periode: str | None = "semua"
+
 @app.post("/api/stats")
-def get_stats_detail(payload: dict = {}):
+def get_filtered_stats(req: FilterRequest):
+    df_global = get_cached_landing_df() # Atau fungsi load data merah
+    # Gunakan SHEET_CSV_URL untuk data merah detail
     try:
-        df_merah = pd.read_csv(SHEET_CSV_URL)
-        df_merah.columns = df_merah.columns.str.strip().str.replace('\ufeff', '')
-        
-        # Hitung ringkasan status merah detail
-        total_rows = len(df_merah)
-        
-        # Kolom verifikasi & gejala
-        h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
-        d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
-        g_col = next((c for c in df_merah.columns if 'gejala' in c.lower()), None)
-        
-        # Hitung tervalidasi / tidak respons
-        terverifikasi = 0
-        t_respon = 0
-        t_divalidasi = 0
-        
-        gejala_list = []
-        diag_list = []
-        tindak_lanjut_list = []
-        
-        for _, r in df_merah.iterrows():
-            status_v = str(r.get(h_col, '')) if h_col else ''
-            if 'tidak respons' in status_v.lower():
-                t_respon += 1
-            elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower():
-                t_divalidasi += 1
-            else:
-                terverifikasi += 1
-                
-            if g_col:
-                g_val = str(r.get(g_col, '')).strip()
-                if g_val and g_val not in ['-', '', 'nan']:
-                    gejala_list.append(g_val)
-                    
-            if d_col:
-                d_val = str(r.get(d_col, '')).strip()
-                if d_val and d_val not in ['-', '', 'nan']:
-                    diag_list.append(d_val)
-                    
-            if h_col:
-                tindak_lanjut_list.append(status_v if status_v else 'Tidak dilakukan verifikasi')
+        df_global = pd.read_csv(SHEET_CSV_URL)
+        df_global.columns = df_global.columns.str.strip().str.replace('\ufeff', '')
+    except Exception:
+        pass
 
-        top_gejala = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(gejala_list).value_counts().head(10).items()]
-        top_diag = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(diag_list).value_counts().head(10).items()]
-        status_tindak = [{"nama": k, "jumlah": int(v)} for k, v in pd.Series(tindak_lanjut_list).value_counts().head(10).items()]
+    if df_global.empty:
+        return {"error": "Data kosong"}
 
-        return {
-            "total_merah": total_rows,
-            "terverifikasi": terverifikasi,
-            "tidak_respon": t_respon,
-            "tidak_dilakukan": t_divalidasi,
-            "cakupan_pct": round((terverifikasi / total_rows * 100), 2) if total_rows > 0 else 0.0,
-            "top_gejala": top_gejala,
-            "top_diagnosis": top_diag,
-            "status_tindak_lanjut": status_tindak
-        }
-    except Exception as e:
-        return {"error": str(e)}
+    tanggal_terakhir = "28/10/2026"
+    tanggal_col_name = next((c for c in df_global.columns if 'tanggal' in c.lower() or 'date' in c.lower()), None)
+    
+    if tanggal_col_name:
+        df_global['parsed_date'] = pd.to_datetime(df_global[tanggal_col_name], errors='coerce', dayfirst=True)
+        if df_global['parsed_date'].isna().sum() > len(df_global) * 0.5:
+            df_global['parsed_date'] = pd.to_datetime(df_global[tanggal_col_name], errors='coerce', format='mixed')
+
+        if 'Tanggal' in df_global.columns:
+            val_tgl = df_global['Tanggal'].dropna()
+            if not val_tgl.empty:
+                tanggal_terakhir = str(val_tgl.iloc[-1])
+
+    gejala_col_name = next((c for c in df_global.columns if 'gejala' in c.lower() or 'daftar gejala' in c.lower()), None)
+    diag_col_name = next((c for c in df_global.columns if 'diagnosis' in c.lower()), None)
+
+    # Hitung Top 10 Gejala Global
+    fixed_top_gejala = []
+    if gejala_col_name:
+        all_g = []
+        for val in df_global[gejala_col_name].dropna():
+            cleaned_str = str(val).replace('â€¢', ',').replace('•', ',').replace(';', ',')
+            for item in cleaned_str.split(','):
+                ci = item.strip().strip('"').strip("'").title()
+                if ci and len(ci) > 2 and ci != '-':
+                    all_g.append(ci)
+        fixed_top_gejala = [k for k, v in pd.Series(all_g).value_counts().head(10).items()]
+
+    # Hitung Top 10 Diagnosis Global
+    fixed_top_diag = []
+    if diag_col_name:
+        d_series = df_global[diag_col_name].dropna().astype(str).str.strip()
+        d_series = d_series[~d_series.isin(['-', '', 'A', 'a', 'nan', 'NaN'])]
+        fixed_top_diag = [k for k, v in d_series.value_counts().head(10).items()]
+
+    df_filtered = df_global.copy()
+
+    # Filter Berdasarkan Periode Waktu
+    if req.periode and req.periode != "semua" and 'parsed_date' in df_filtered.columns:
+        if req.periode == "this_month":
+            max_date = df_filtered['parsed_date'].max()
+            target_bulan = max_date.month if pd.notna(max_date) else 10
+            target_tahun = max_date.year if pd.notna(max_date) else 2026
+            df_filtered = df_filtered[
+                (df_filtered['parsed_date'].dt.month == target_bulan) & 
+                (df_filtered['parsed_date'].dt.year == target_tahun)
+            ]
+        elif req.periode.isdigit():
+            target_tahun = int(req.periode)
+            df_filtered = df_filtered[df_filtered['parsed_date'].dt.year == target_tahun]
+
+    # Filter Berdasarkan Gejala & Diagnosis
+    if req.gejala and gejala_col_name:
+        df_filtered = df_filtered[
+            df_filtered[gejala_col_name].fillna('').str.contains(req.gejala, case=False, na=False)
+        ]
+    if req.diagnosis and diag_col_name:
+        df_filtered = df_filtered[
+            df_filtered[diag_col_name].fillna('').str.contains(req.diagnosis, case=False, na=False)
+        ]
+
+    total_merah = len(df_filtered)
+    
+    verif_counts = {}
+    terverifikasi = 0
+    tidak_respon = 0
+    tidak_divalidasi = 0
+    
+    h_col = next((c for c in df_filtered.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
+    if h_col:
+        verif_series = df_filtered[h_col].dropna()
+        verif_counts = verif_series.value_counts().to_dict()
+        tidak_respon = int(verif_counts.get('Penumpang tidak respons', 0))
+        tidak_divalidasi = int(verif_counts.get('Tidak dilakukan verifikasi', 0))
+        terverifikasi = int(total_merah - tidak_divalidasi - tidak_respon)
+        if terverifikasi < 0: terverifikasi = 0
+
+    cakupan_pct = round((terverifikasi / total_merah * 100), 2) if total_merah > 0 else 0.0
+
+    # Top Gejala Berdasarkan Data Terfilter
+    top_gejala_data = []
+    if gejala_col_name:
+        for g_item in fixed_top_gejala:
+            count = int(df_filtered[gejala_col_name].fillna('').str.contains(g_item, case=False, na=False).sum())
+            top_gejala_data.append({"val": g_item, "count": count})
+        top_gejala_data.sort(key=lambda x: x['count'], reverse=True)
+
+    # Top Diagnosis Berdasarkan Data Terfilter
+    top_diag_data = []
+    if diag_col_name:
+        base_total = len(df_filtered) if len(df_filtered) > 0 else 1
+        for d_item in fixed_top_diag:
+            count = int((df_filtered[diag_col_name].dropna().astype(str).str.strip() == d_item).sum())
+            pct = round((count / base_total) * 100, 2)
+            top_diag_data.append({"val": d_item, "count": count, "pct": pct})
+        top_diag_data.sort(key=lambda x: x['count'], reverse=True)
+
+    return {
+        "tanggal_terakhir": tanggal_terakhir,
+        "total_merah": total_merah,
+        "terverifikasi": terverifikasi,
+        "tidak_respon": tidak_respon,
+        "tidak_divalidasi": tidak_divalidasi,
+        "cakupan_pct": cakupan_pct,
+        "status_tindak_lanjut": verif_counts,
+        "top_gejala": top_gejala_data,
+        "top_diagnosis": top_diag_data,
+        "pembacaan": f"Analisis komprehensif berdasarkan {total_merah:,} kasus terverifikasi.",
+        "rekomendasi": ["Tingkatkan skrining kesehatan pelabuhan."]
+    }
