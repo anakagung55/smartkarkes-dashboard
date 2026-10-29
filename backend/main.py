@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import pandas as pd
 import os
 from dotenv import load_dotenv
 from typing import Optional
-from pydantic import BaseModel
 
 load_dotenv()
 
@@ -27,7 +27,7 @@ def get_cached_landing_df(force_reload: bool = False):
     global CACHE_LANDING_DF
     if CACHE_LANDING_DF is None or force_reload:
         try:
-            print("🔄 Sedang mendownload ulang data dari Google Sheets...")
+            print("🔄 Sedang mendownload ulang data dari Google Sheets (Landing)...")
             df = pd.read_csv(LANDING_SHEET_URL)
             df.columns = df.columns.str.strip().str.replace('\ufeff', '')
             CACHE_LANDING_DF = df
@@ -39,6 +39,19 @@ def get_cached_landing_df(force_reload: bool = False):
             else:
                 CACHE_LANDING_DF = pd.DataFrame()
     return CACHE_LANDING_DF.copy()
+
+def load_data_from_sheets():
+    try:
+        df = pd.read_csv(SHEET_CSV_URL)
+        df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+        return df
+    except Exception as e:
+        print(f"⚠️ Gagal memuat data merah dari Google Sheets: {e}")
+        if os.path.exists("data/data_merah.csv"):
+            df = pd.read_csv("data/data_merah.csv")
+            df.columns = df.columns.str.strip().str.replace('\ufeff', '')
+            return df
+        return pd.DataFrame()
 
 @app.get("/api/sync")
 def sync_data():
@@ -67,7 +80,6 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         kuning = int(df_landing['Daerah Terjangkit'].sum()) if 'Daerah Terjangkit' in df_landing.columns else 0
         hijau = int(df_landing['Tidak Berisiko'].sum()) if 'Tidak Berisiko' in df_landing.columns else 0
 
-        # Ambil Master List Negara yang Bersih dari Sheet 1 (Landing)
         landing_total_map = {}
         valid_countries = set()
         negara_col = next((c for c in df_landing.columns if 'negara' in c.lower()), None)
@@ -106,15 +118,11 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
             f"Negara penyumbang kedatangan terbesar saat ini adalah **{top_negara_name}**."
         )
 
-        # Urutkan nama negara dari yang paling panjang ke pendek (agar pencocokan akurat, misal "South Korea" kedeteksi dulu sebelum "Korea")
         sorted_valid_countries = sorted(list(valid_countries), key=len, reverse=True)
 
-        # --- PENGOLAHAN DATA HUBUNGAN VERIFIKASI (MENCOCOKKAN DENGAN MASTER LIST SHEET 1) ---
         verif_raw_agg = {}
         try:
-            df_merah = pd.read_csv(SHEET_CSV_URL)
-            df_merah.columns = df_merah.columns.str.strip().str.replace('\ufeff', '')
-            
+            df_merah = load_data_from_sheets()
             n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
             h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
             d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
@@ -127,23 +135,18 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                     status_v = str(r.get(h_col, '')) if h_col else ''
                     d_val = str(r.get(d_col, '')).strip() if d_col else ''
                     
-                    # Clean Diagnosis: Abaikan jika kosong atau kode huruf tunggal tak jelas
                     clean_diag = ""
                     if d_val and d_val not in ['-', '', 'nan']:
                         if len(d_val) > 2 or not d_val.isupper():
                             clean_diag = d_val
 
-                    # Cocokkan teks raw_negara dengan Master List Negara dari Sheet 1
                     matched_countries = []
                     raw_lower = raw_negara.lower()
-                    
                     for c_name in sorted_valid_countries:
                         if c_name.lower() in raw_lower:
                             matched_countries.append(c_name)
-                            # Hapus bagian yang sudah dicocokkan agar tidak double
                             raw_lower = raw_lower.replace(c_name.lower(), '')
                     
-                    # Jika tidak ada yang cocok dengan master list Sheet 1, pakai teks aslinya
                     if not matched_countries:
                         matched_countries = [raw_negara]
 
@@ -152,41 +155,27 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                         if not key or len(key) <= 1: continue
                         
                         if key not in verif_raw_agg:
-                            verif_raw_agg[key] = {
-                                "verif_merah": 0,
-                                "t_respon": 0,
-                                "t_divalidasi": 0,
-                                "diag_list": []
-                            }
+                            verif_raw_agg[key] = {"verif_merah": 0, "t_respon": 0, "t_valid": 0, "diag_list": []}
                         
                         verif_raw_agg[key]["verif_merah"] += 1
                         if 'tidak respons' in status_v.lower():
                             verif_raw_agg[key]["t_respon"] += 1
                         elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower():
-                            verif_raw_agg[key]["t_divalidasi"] += 1
-                            
+                            verif_raw_agg[key]["t_valid"] += 1
                         if clean_diag:
                             verif_raw_agg[key]["diag_list"].append(clean_diag)
-
         except Exception as ex:
             print(f"Info verifikasi error: {ex}")
 
-        # Format hasil akhir ke frontend
         verif_data = []
         for negara_name, dat in verif_raw_agg.items():
             v_count = dat["verif_merah"]
             t_resp = dat["t_respon"]
-            t_dival = dat["t_divalidasi"]
-            
-            terverifikasi = v_count - t_resp - t_dival
-            if terverifikasi < 0: terverifikasi = 0
-            
+            t_dival = dat["t_valid"]
+            terverifikasi = max(0, v_count - t_dival - t_resp)
             cakupan_pct = round((terverifikasi / v_count * 100), 2) if v_count > 0 else 0.0
-            
             diag_counts = pd.Series(dat["diag_list"]).value_counts().head(2)
             diag_str = "; ".join([f"{k} ({v})" for k, v in diag_counts.items()]) if not diag_counts.empty else "-"
-
-            # Ambil total riwayat dari Landing Map berdasarkan nama negara yang bersih
             total_riwayat_landing = landing_total_map.get(negara_name.lower(), "-")
 
             verif_data.append({
@@ -200,31 +189,21 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                 "diagnosis": diag_str
             })
 
-            # --- PENGOLAHAN TREN BULANAN DARI SHEET MERAH / LANDING ---
-        # Membuat array 12 bulan (Jan - Des) untuk tahun 2026 dan 2025 (mulai Juni s.d. Des)
-        # --- PENGOLAHAN TREN BULANAN RIIL DARI SHEET MERAH (FULL TANPA FILTER BULAN) ---
         tren_2026 = [0] * 12
         tren_2025 = [0] * 12
-        tren_other = {}
-
         try:
-            df_merah_trend = pd.read_csv(SHEET_CSV_URL)
-            df_merah_trend.columns = df_merah_trend.columns.str.strip().str.replace('\ufeff', '')
-            
-            # Filter berdasarkan negara jika dipilih dan bukan "Semua Negara"
-            n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah_trend.columns else df_merah_trend.columns[3]
+            df_trend = load_data_from_sheets()
+            n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_trend.columns else df_trend.columns[3]
             if negara and negara != "Semua Negara":
-                df_merah_trend = df_merah_trend[df_merah_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
+                df_trend = df_trend[df_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
 
-            if 'Tanggal' in df_merah_trend.columns:
-                # Kamus mapping bulan bahasa Indonesia ke angka/Inggris agar pandas bisa parsing
+            if 'Tanggal' in df_trend.columns:
                 indo_months = {
                     'januari': 'Jan', 'februari': 'Feb', 'maret': 'Mar', 'april': 'Apr', 'mei': 'May', 'juni': 'Jun',
                     'juli': 'Jul', 'agustus': 'Aug', 'september': 'Sep', 'oktober': 'Oct', 'november': 'Nov', 'desember': 'Dec',
                     'jan': 'Jan', 'feb': 'Feb', 'mar': 'Mar', 'apr': 'Apr', 'me': 'May', 'jun': 'Jun',
                     'jul': 'Jul', 'agu': 'Aug', 'sep': 'Sep', 'okt': 'Oct', 'nov': 'Nov', 'des': 'Dec'
                 }
-
                 def clean_and_parse_date(val):
                     if pd.isna(val): return pd.NaT
                     s = str(val).lower().strip()
@@ -234,41 +213,26 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                             break
                     return pd.to_datetime(s, errors='coerce', dayfirst=True, format='mixed')
 
-                df_merah_trend['parsed_date'] = df_merah_trend['Tanggal'].apply(clean_and_parse_date)
-                df_merah_trend['year'] = df_merah_trend['parsed_date'].dt.year
-                df_merah_trend['month'] = df_merah_trend['parsed_date'].dt.month
+                df_trend['parsed_date'] = df_trend['Tanggal'].apply(clean_and_parse_date)
+                df_trend['year'] = df_trend['parsed_date'].dt.year
+                df_trend['month'] = df_trend['parsed_date'].dt.month
 
-                # Hitung untuk tahun 2026 (Jan - Des)
-                df_2026 = df_merah_trend[df_merah_trend['year'] == 2026]
+                df_2026 = df_trend[df_trend['year'] == 2026]
                 if not df_2026.empty:
-                    m_counts_2026 = df_2026.groupby('month').size()
+                    m_2026 = df_2026.groupby('month').size()
                     for m in range(1, 13):
-                        tren_2026[m-1] = int(m_counts_2026.get(m, 0))
+                        tren_2026[m-1] = int(m_2026.get(m, 0))
 
-                # Hitung untuk tahun 2025 (Jan - Des, full tanpa batasan)
-                df_2025 = df_merah_trend[df_merah_trend['year'] == 2025]
+                df_2025 = df_trend[df_trend['year'] == 2025]
                 if not df_2025.empty:
-                    m_counts_2025 = df_2025.groupby('month').size()
+                    m_2025 = df_2025.groupby('month').size()
                     for m in range(1, 13):
-                        tren_2025[m-1] = int(m_counts_2025.get(m, 0))
-                        
-                # Menangkap tahun lain jika ada (misal 2024 ke bawah)
-                other_years = df_merah_trend[~df_merah_trend['year'].isin([2025, 2026]) & df_merah_trend['year'].notna()]
-                for yr, group in other_years.groupby('year'):
-                    yr_int = int(yr)
-                    arr_yr = [0] * 12
-                    m_counts = group.groupby('month').size()
-                    for m in range(1, 13):
-                        arr_yr[m-1] = int(m_counts.get(m, 0))
-                    tren_other[yr_int] = arr_yr
-
+                        tren_2025[m-1] = int(m_2025.get(m, 0))
         except Exception as ex_t:
-            print(f"Info tren bulanan error: {ex_t}")
+            print(f"Info tren error: {ex_t}")
 
-            # --- PENGOLAHAN RINCIAN BULANAN DARI SHEET 1 / LANDING ---
         rincian_bulanan_data = []
         try:
-            # Mengelompokkan data landing berdasarkan bulan dari kolom 'Tanggal'
             if 'Tanggal' in df_landing.columns and 'Total Isian' in df_landing.columns and 'Berisiko' in df_landing.columns:
                 df_monthly = df_landing.groupby(df_landing['parsed_date'].dt.to_period('M')).agg({
                     'Total Isian': 'sum',
@@ -278,7 +242,6 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                 for _, row in df_monthly.iterrows():
                     p_date = row['parsed_date']
                     if pd.isna(p_date): continue
-                    month_name = p_date.strftime('%B %Y') # Contoh: June 2026 / Januari 2026
                     tot_is = int(row['Total Isian'])
                     mer_is = int(row['Berisiko'])
                     rate_100k = round((mer_is / tot_is * 100000), 2) if tot_is > 0 else 0.0
@@ -286,8 +249,8 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                     
                     rincian_bulanan_data.append({
                         "tahun": str(p_date.year),
-                        "bulan": p_date.strftime('%B'), # Nama bulan murni (Januari, Februari, dst)
-                        "tahun_bulan": month_name,
+                        "bulan": p_date.strftime('%B'),
+                        "tahun_bulan": p_date.strftime('%B %Y'),
                         "total_riwayat": tot_is,
                         "bergejala": mer_is,
                         "per_100k": rate_100k,
@@ -318,16 +281,10 @@ class FilterRequest(BaseModel):
 
 @app.post("/api/stats")
 def get_filtered_stats(req: FilterRequest):
-    df_global = get_cached_landing_df() # Atau fungsi load data merah
-    # Gunakan SHEET_CSV_URL untuk data merah detail
-    try:
-        df_global = pd.read_csv(SHEET_CSV_URL)
-        df_global.columns = df_global.columns.str.strip().str.replace('\ufeff', '')
-    except Exception:
-        pass
-
+    df_global = load_data_from_sheets()
+    
     if df_global.empty:
-        return {"error": "Data kosong"}
+        return {"error": "Data Google Sheets kosong atau tidak dapat diakses"}
 
     tanggal_terakhir = "28/10/2026"
     tanggal_col_name = next((c for c in df_global.columns if 'tanggal' in c.lower() or 'date' in c.lower()), None)
@@ -345,7 +302,6 @@ def get_filtered_stats(req: FilterRequest):
     gejala_col_name = next((c for c in df_global.columns if 'gejala' in c.lower() or 'daftar gejala' in c.lower()), None)
     diag_col_name = next((c for c in df_global.columns if 'diagnosis' in c.lower()), None)
 
-    # Hitung Top 10 Gejala Global
     fixed_top_gejala = []
     if gejala_col_name:
         all_g = []
@@ -357,7 +313,6 @@ def get_filtered_stats(req: FilterRequest):
                     all_g.append(ci)
         fixed_top_gejala = [k for k, v in pd.Series(all_g).value_counts().head(10).items()]
 
-    # Hitung Top 10 Diagnosis Global
     fixed_top_diag = []
     if diag_col_name:
         d_series = df_global[diag_col_name].dropna().astype(str).str.strip()
@@ -366,7 +321,6 @@ def get_filtered_stats(req: FilterRequest):
 
     df_filtered = df_global.copy()
 
-    # Filter Berdasarkan Periode Waktu
     if req.periode and req.periode != "semua" and 'parsed_date' in df_filtered.columns:
         if req.periode == "this_month":
             max_date = df_filtered['parsed_date'].max()
@@ -380,7 +334,6 @@ def get_filtered_stats(req: FilterRequest):
             target_tahun = int(req.periode)
             df_filtered = df_filtered[df_filtered['parsed_date'].dt.year == target_tahun]
 
-    # Filter Berdasarkan Gejala & Diagnosis
     if req.gejala and gejala_col_name:
         df_filtered = df_filtered[
             df_filtered[gejala_col_name].fillna('').str.contains(req.gejala, case=False, na=False)
@@ -408,7 +361,6 @@ def get_filtered_stats(req: FilterRequest):
 
     cakupan_pct = round((terverifikasi / total_merah * 100), 2) if total_merah > 0 else 0.0
 
-    # Top Gejala Berdasarkan Data Terfilter
     top_gejala_data = []
     if gejala_col_name:
         for g_item in fixed_top_gejala:
@@ -416,7 +368,6 @@ def get_filtered_stats(req: FilterRequest):
             top_gejala_data.append({"val": g_item, "count": count})
         top_gejala_data.sort(key=lambda x: x['count'], reverse=True)
 
-    # Top Diagnosis Berdasarkan Data Terfilter
     top_diag_data = []
     if diag_col_name:
         base_total = len(df_filtered) if len(df_filtered) > 0 else 1
@@ -425,6 +376,27 @@ def get_filtered_stats(req: FilterRequest):
             pct = round((count / base_total) * 100, 2)
             top_diag_data.append({"val": d_item, "count": count, "pct": pct})
         top_diag_data.sort(key=lambda x: x['count'], reverse=True)
+
+    g_txt = req.gejala if req.gejala else "Keseluruhan Gejala"
+    d_txt = req.diagnosis if req.diagnosis else "Keseluruhan Diagnosis"
+    
+    top_g_name = top_gejala_data[0]['val'] if top_gejala_data and top_gejala_data[0]['count'] > 0 else 'Tidak ada'
+    top_d_name = top_diag_data[0]['val'] if top_diag_data and top_diag_data[0]['count'] > 0 else 'Tidak ada'
+
+    pembacaan = (
+        f"Berdasarkan pemantauan data real-time Google Sheets untuk periode **{req.periode}**, tercatat akumulasi sebanyak "
+        f"**{total_merah:,} kasus PPLN**. Dari total tersebut, tingkat rasio verifikasi lapangan mencapai **{cakupan_pct}%** "
+        f"dengan **{terverifikasi:,} kasus tuntas**. Analisis irisan menunjukkan bahwa indikasi gejala dominan saat ini adalah "
+        f"**{top_g_name}**, dengan mayoritas diagnosis terarah pada **{top_d_name}**. "
+        f"Kondisi ini menuntut kesiagaan tinggi di posko kedatangan guna menekan angka penumpang yang belum memberikan respons (**{tidak_respon:,} kasus**)."
+    )
+    
+    rekomendasi = [
+        f"Intensifkan prosedur kekarantinaan dan validasi dokumen kesehatan mendalam pada manifes dengan profil gejala **{g_txt.lower()}**.",
+        f"Lakukan pelacakan aktif (tracing) terhadap **{tidak_respon} penumpang** berstatus 'tidak respons' untuk memastikan status kesehatan mereka aman.",
+        f"Koordinasikan penanganan medis darurat bersama tim surveilans wilayah kerja jika ditemukan lonjakan pada diagnosis **{top_d_name}**.",
+        "Pastikan seluruh rekapitulasi harian pada Google Sheets tersinkronisasi secara real-time untuk mendukung ketepatan kebijakan."
+    ]
 
     return {
         "tanggal_terakhir": tanggal_terakhir,
@@ -436,6 +408,6 @@ def get_filtered_stats(req: FilterRequest):
         "status_tindak_lanjut": verif_counts,
         "top_gejala": top_gejala_data,
         "top_diagnosis": top_diag_data,
-        "pembacaan": f"Analisis komprehensif berdasarkan {total_merah:,} kasus terverifikasi.",
-        "rekomendasi": ["Tingkatkan skrining kesehatan pelabuhan."]
+        "pembacaan": pembacaan,
+        "rekomendasi": rekomendasi
     }
