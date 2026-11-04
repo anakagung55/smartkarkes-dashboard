@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
@@ -25,51 +25,65 @@ def read_root():
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1fqp6xsIxYOkF-SWaEUBae1pW7BKu9RMiI7xyjOuvB5o/gviz/tq?tqx=out:csv&sheet=MERAH"
 LANDING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1p-QhV_ZgbLqKy77DWtdwCsUVcdOPauA9UMfMeb8c7NQ/gviz/tq?tqx=out:csv&sheet=Sheet1"
 
+# ==========================================
+# SISTEM CACHE RAM 
+# ==========================================
 CACHE_LANDING_DF = None
 CACHE_MERAH_DF = None
 
-def get_cached_landing_df(force_reload: bool = False):
+def get_cached_landing_df():
     global CACHE_LANDING_DF
-    if CACHE_LANDING_DF is None or force_reload:
+    if CACHE_LANDING_DF is None:
         try:
-            print("🔄 Sedang mendownload ulang data dari Google Sheets (Landing)...")
+            print("🔄 [INITIAL] Mendownload data dari Google Sheets (Landing)...")
             df = pd.read_csv(LANDING_SHEET_URL)
             df.columns = df.columns.str.strip().str.replace('\ufeff', '')
             CACHE_LANDING_DF = df
         except Exception as e:
             print(f"⚠️ Gagal load sheets: {e}")
-            if os.path.exists("data/landing.csv"):
-                CACHE_LANDING_DF = pd.read_csv("data/landing.csv")
-                CACHE_LANDING_DF.columns = CACHE_LANDING_DF.columns.str.strip().str.replace('\ufeff', '')
-            else:
-                CACHE_LANDING_DF = pd.DataFrame()
+            CACHE_LANDING_DF = pd.DataFrame()
     return CACHE_LANDING_DF.copy()
 
-def get_cached_merah_df(force_reload: bool = False):
+def get_cached_merah_df():
     global CACHE_MERAH_DF
-    if CACHE_MERAH_DF is None or force_reload:
+    if CACHE_MERAH_DF is None:
         try:
-            print("🔄 Sedang mendownload ulang data dari Google Sheets (Data Merah)...")
+            print("🔄 [INITIAL] Mendownload data dari Google Sheets (Data Merah)...")
             df = pd.read_csv(SHEET_CSV_URL)
             df.columns = df.columns.str.strip().str.replace('\ufeff', '')
             CACHE_MERAH_DF = df
         except Exception as e:
             print(f"⚠️ Gagal load data merah: {e}")
-            if os.path.exists("data/data_merah.csv"):
-                CACHE_MERAH_DF = pd.read_csv("data/data_merah.csv")
-                CACHE_MERAH_DF.columns = CACHE_MERAH_DF.columns.str.strip().str.replace('\ufeff', '')
-            else:
-                CACHE_MERAH_DF = pd.DataFrame()
+            CACHE_MERAH_DF = pd.DataFrame()
     return CACHE_MERAH_DF.copy()
 
+# Fungsi khusus untuk narik data diam-diam (Background Task)
+def update_cache_background():
+    global CACHE_LANDING_DF, CACHE_MERAH_DF
+    print("🚀 [BACKGROUND] Proses sinkronisasi data terbaru dimulai...")
+    try:
+        df_l = pd.read_csv(LANDING_SHEET_URL)
+        df_l.columns = df_l.columns.str.strip().str.replace('\ufeff', '')
+        CACHE_LANDING_DF = df_l
+    except Exception as e:
+        print(f"⚠️ Background error landing: {e}")
+
+    try:
+        df_m = pd.read_csv(SHEET_CSV_URL)
+        df_m.columns = df_m.columns.str.strip().str.replace('\ufeff', '')
+        CACHE_MERAH_DF = df_m
+    except Exception as e:
+        print(f"⚠️ Background error merah: {e}")
+    print("✅ [BACKGROUND] Sinkronisasi data selesai!")
+
 @app.get("/api/sync")
-def sync_data():
-    df_landing = get_cached_landing_df(force_reload=True)
-    df_merah = get_cached_merah_df(force_reload=True)
+def sync_data(background_tasks: BackgroundTasks):
+    # API akan langsung merespons ke frontend secara instan
+    # sementara proses tarik data yang berat diserahkan ke BackgroundTasks
+    background_tasks.add_task(update_cache_background)
     return {
         "status": "success", 
-        "total_landing": len(df_landing), 
-        "total_merah": len(df_merah)
+        "message": "Sinkronisasi berjalan di belakang layar. Lanjutkan penggunaan dashboard."
     }
 
 @app.get("/api/landing")
