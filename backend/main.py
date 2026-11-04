@@ -1,82 +1,107 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import pandas as pd
 import os
 from dotenv import load_dotenv
 from typing import Optional
+from contextlib import asynccontextmanager
+import asyncio
 
 load_dotenv()
-
-app = FastAPI(title="Backend Smartkarkes AI - Realtime Sheets")
-
-# KONFIGURASI CORS YANG BENAR & ANTI-GAGAL
-app.add_middleware(
-    CORSMiddleware,
-    # Jika masih error pakai "*", ganti baris di bawah dengan:
-    # allow_origins=["https://jade-marshmallow-ebabf5.netlify.app", "https://dynamic-scone-3b90dd.netlify.app"],
-    allow_origins=["*"], 
-    allow_credentials=False, # WAJIB FALSE jika allow_origins=["*"]
-    allow_methods=["GET", "POST", "OPTIONS"], # JANGAN gunakan "*", sebutkan methodnya secara eksplisit
-    allow_headers=["*"],
-)
-
-@app.get("/")
-def read_root():
-    return {"status": "Backend Smartkarkes Aktif!"}
 
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1fqp6xsIxYOkF-SWaEUBae1pW7BKu9RMiI7xyjOuvB5o/gviz/tq?tqx=out:csv&sheet=MERAH"
 LANDING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1p-QhV_ZgbLqKy77DWtdwCsUVcdOPauA9UMfMeb8c7NQ/gviz/tq?tqx=out:csv&sheet=Sheet1"
 
 CACHE_LANDING_DF = None
 CACHE_MERAH_DF = None
+IS_DOWNLOADING = False
 
-def get_cached_landing_df(force_reload: bool = False):
+# Fungsi untuk mendownload data (dijalankan di background atau saat startup)
+def force_download_data():
+    global CACHE_LANDING_DF, CACHE_MERAH_DF, IS_DOWNLOADING
+    IS_DOWNLOADING = True
+    print("🚀 [STARTUP/SYNC] Memulai download data dari Google Sheets...")
+    
+    try:
+        # Download Landing Data
+        print("📥 Mengunduh Data Landing...")
+        df_landing = pd.read_csv(LANDING_SHEET_URL)
+        df_landing.columns = df_landing.columns.str.strip().str.replace('\ufeff', '')
+        CACHE_LANDING_DF = df_landing
+        print(f"✅ Data Landing berhasil diunduh! ({len(df_landing)} baris)")
+    except Exception as e:
+        print(f"⚠️ Gagal load data landing: {e}")
+        CACHE_LANDING_DF = pd.DataFrame()
+
+    try:
+        # Download Merah Data
+        print("📥 Mengunduh Data Merah...")
+        df_merah = pd.read_csv(SHEET_CSV_URL)
+        df_merah.columns = df_merah.columns.str.strip().str.replace('\ufeff', '')
+        CACHE_MERAH_DF = df_merah
+        print(f"✅ Data Merah berhasil diunduh! ({len(df_merah)} baris)")
+    except Exception as e:
+        print(f"⚠️ Gagal load data merah: {e}")
+        CACHE_MERAH_DF = pd.DataFrame()
+        
+    IS_DOWNLOADING = False
+    print("🚀 [STARTUP/SYNC] Proses download selesai.")
+
+# Lifespan akan dieksekusi saat server menyala, SEBELUM menerima request
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Jalankan download di thread terpisah agar tidak nge-block
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, force_download_data)
+    yield
+    # Kode di bawah yield dieksekusi saat server mati (opsional)
+
+app = FastAPI(title="Backend Smartkarkes AI - Realtime Sheets", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=False, 
+    allow_methods=["GET", "POST", "OPTIONS"], 
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def read_root():
+    status_data = "Sedang Mengunduh Data..." if IS_DOWNLOADING else "Data Siap"
+    return {"status": "Backend Smartkarkes Aktif!", "data_status": status_data}
+
+def get_cached_landing_df():
     global CACHE_LANDING_DF
-    if CACHE_LANDING_DF is None or force_reload:
-        try:
-            print("🔄 Sedang mendownload ulang data dari Google Sheets (Landing)...")
-            df = pd.read_csv(LANDING_SHEET_URL)
-            df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-            CACHE_LANDING_DF = df
-        except Exception as e:
-            print(f"⚠️ Gagal load sheets: {e}")
-            if os.path.exists("data/landing.csv"):
-                CACHE_LANDING_DF = pd.read_csv("data/landing.csv")
-                CACHE_LANDING_DF.columns = CACHE_LANDING_DF.columns.str.strip().str.replace('\ufeff', '')
-            else:
-                CACHE_LANDING_DF = pd.DataFrame()
+    # Jika data masih kosong tapi tidak sedang download, return empty DF sementara
+    if CACHE_LANDING_DF is None:
+        return pd.DataFrame()
     return CACHE_LANDING_DF.copy()
 
-def get_cached_merah_df(force_reload: bool = False):
+def get_cached_merah_df():
     global CACHE_MERAH_DF
-    if CACHE_MERAH_DF is None or force_reload:
-        try:
-            print("🔄 Sedang mendownload ulang data dari Google Sheets (Data Merah)...")
-            df = pd.read_csv(SHEET_CSV_URL)
-            df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-            CACHE_MERAH_DF = df
-        except Exception as e:
-            print(f"⚠️ Gagal load data merah: {e}")
-            if os.path.exists("data/data_merah.csv"):
-                CACHE_MERAH_DF = pd.read_csv("data/data_merah.csv")
-                CACHE_MERAH_DF.columns = CACHE_MERAH_DF.columns.str.strip().str.replace('\ufeff', '')
-            else:
-                CACHE_MERAH_DF = pd.DataFrame()
+    if CACHE_MERAH_DF is None:
+        return pd.DataFrame()
     return CACHE_MERAH_DF.copy()
 
 @app.get("/api/sync")
-def sync_data():
-    df_landing = get_cached_landing_df(force_reload=True)
-    df_merah = get_cached_merah_df(force_reload=True)
-    return {
-        "status": "success", 
-        "total_landing": len(df_landing), 
-        "total_merah": len(df_merah)
-    }
+def sync_data(background_tasks: BackgroundTasks):
+    global IS_DOWNLOADING
+    if IS_DOWNLOADING:
+        return {"status": "processing", "message": "Proses sinkronisasi sedang berjalan di background."}
+    
+    # Jalankan force_download_data di background
+    background_tasks.add_task(force_download_data)
+    return {"status": "started", "message": "Sinkronisasi dimulai. Data akan segera diperbarui."}
 
 @app.get("/api/landing")
 def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] = None, negara: Optional[str] = None):
+    # Cek apakah sedang proses download awal
+    global IS_DOWNLOADING
+    if IS_DOWNLOADING and CACHE_LANDING_DF is None:
+         return {"error": "Server sedang mempersiapkan data awal. Mohon tunggu beberapa saat dan refresh halaman."}
+         
     try:
         df_landing = get_cached_landing_df()
         if df_landing.empty:
@@ -140,47 +165,48 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         verif_raw_agg = {}
         try:
             df_merah = get_cached_merah_df()
-            n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
-            h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
-            d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
+            if not df_merah.empty:
+                n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
+                h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
+                d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
 
-            if n_col:
-                for _, r in df_merah.iterrows():
-                    raw_negara = str(r.get(n_col, '')).strip()
-                    if not raw_negara or raw_negara.lower() in ['nan', '-', '', 'nat']: continue
-                    
-                    status_v = str(r.get(h_col, '')) if h_col else ''
-                    d_val = str(r.get(d_col, '')).strip() if d_col else ''
-                    
-                    clean_diag = ""
-                    if d_val and d_val not in ['-', '', 'nan']:
-                        if len(d_val) > 2 or not d_val.isupper():
-                            clean_diag = d_val
-
-                    matched_countries = []
-                    raw_lower = raw_negara.lower()
-                    for c_name in sorted_valid_countries:
-                        if c_name.lower() in raw_lower:
-                            matched_countries.append(c_name)
-                            raw_lower = raw_lower.replace(c_name.lower(), '')
-                    
-                    if not matched_countries:
-                        matched_countries = [raw_negara]
-
-                    for negara_name in matched_countries:
-                        key = negara_name.strip()
-                        if not key or len(key) <= 1: continue
+                if n_col:
+                    for _, r in df_merah.iterrows():
+                        raw_negara = str(r.get(n_col, '')).strip()
+                        if not raw_negara or raw_negara.lower() in ['nan', '-', '', 'nat']: continue
                         
-                        if key not in verif_raw_agg:
-                            verif_raw_agg[key] = {"verif_merah": 0, "t_respon": 0, "t_valid": 0, "diag_list": []}
+                        status_v = str(r.get(h_col, '')) if h_col else ''
+                        d_val = str(r.get(d_col, '')).strip() if d_col else ''
                         
-                        verif_raw_agg[key]["verif_merah"] += 1
-                        if 'tidak respons' in status_v.lower():
-                            verif_raw_agg[key]["t_respon"] += 1
-                        elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower():
-                            verif_raw_agg[key]["t_valid"] += 1
-                        if clean_diag:
-                            verif_raw_agg[key]["diag_list"].append(clean_diag)
+                        clean_diag = ""
+                        if d_val and d_val not in ['-', '', 'nan']:
+                            if len(d_val) > 2 or not d_val.isupper():
+                                clean_diag = d_val
+
+                        matched_countries = []
+                        raw_lower = raw_negara.lower()
+                        for c_name in sorted_valid_countries:
+                            if c_name.lower() in raw_lower:
+                                matched_countries.append(c_name)
+                                raw_lower = raw_lower.replace(c_name.lower(), '')
+                        
+                        if not matched_countries:
+                            matched_countries = [raw_negara]
+
+                        for negara_name in matched_countries:
+                            key = negara_name.strip()
+                            if not key or len(key) <= 1: continue
+                            
+                            if key not in verif_raw_agg:
+                                verif_raw_agg[key] = {"verif_merah": 0, "t_respon": 0, "t_valid": 0, "diag_list": []}
+                            
+                            verif_raw_agg[key]["verif_merah"] += 1
+                            if 'tidak respons' in status_v.lower():
+                                verif_raw_agg[key]["t_respon"] += 1
+                            elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower():
+                                verif_raw_agg[key]["t_valid"] += 1
+                            if clean_diag:
+                                verif_raw_agg[key]["diag_list"].append(clean_diag)
         except Exception as ex:
             print(f"Info verifikasi error: {ex}")
 
@@ -210,41 +236,42 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         tren_2025 = [0] * 12
         try:
             df_trend = get_cached_merah_df()
-            n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_trend.columns else df_trend.columns[3]
-            if negara and negara != "Semua Negara":
-                df_trend = df_trend[df_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
+            if not df_trend.empty:
+                n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_trend.columns else df_trend.columns[3]
+                if negara and negara != "Semua Negara":
+                    df_trend = df_trend[df_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
 
-            if 'Tanggal' in df_trend.columns:
-                indo_months = {
-                    'januari': 'Jan', 'februari': 'Feb', 'maret': 'Mar', 'april': 'Apr', 'mei': 'May', 'juni': 'Jun',
-                    'juli': 'Jul', 'agustus': 'Aug', 'september': 'Sep', 'oktober': 'Oct', 'november': 'Nov', 'desember': 'Dec',
-                    'jan': 'Jan', 'feb': 'Feb', 'mar': 'Mar', 'apr': 'Apr', 'me': 'May', 'jun': 'Jun',
-                    'jul': 'Jul', 'agu': 'Aug', 'sep': 'Sep', 'okt': 'Oct', 'nov': 'Nov', 'des': 'Dec'
-                }
-                def clean_and_parse_date(val):
-                    if pd.isna(val): return pd.NaT
-                    s = str(val).lower().strip()
-                    for id_m, en_m in indo_months.items():
-                        if id_m in s:
-                            s = s.replace(id_m, en_m)
-                            break
-                    return pd.to_datetime(s, errors='coerce', dayfirst=True, format='mixed')
+                if 'Tanggal' in df_trend.columns:
+                    indo_months = {
+                        'januari': 'Jan', 'februari': 'Feb', 'maret': 'Mar', 'april': 'Apr', 'mei': 'May', 'juni': 'Jun',
+                        'juli': 'Jul', 'agustus': 'Aug', 'september': 'Sep', 'oktober': 'Oct', 'november': 'Nov', 'desember': 'Dec',
+                        'jan': 'Jan', 'feb': 'Feb', 'mar': 'Mar', 'apr': 'Apr', 'me': 'May', 'jun': 'Jun',
+                        'jul': 'Jul', 'agu': 'Aug', 'sep': 'Sep', 'okt': 'Oct', 'nov': 'Nov', 'des': 'Dec'
+                    }
+                    def clean_and_parse_date(val):
+                        if pd.isna(val): return pd.NaT
+                        s = str(val).lower().strip()
+                        for id_m, en_m in indo_months.items():
+                            if id_m in s:
+                                s = s.replace(id_m, en_m)
+                                break
+                        return pd.to_datetime(s, errors='coerce', dayfirst=True, format='mixed')
 
-                df_trend['parsed_date'] = df_trend['Tanggal'].apply(clean_and_parse_date)
-                df_trend['year'] = df_trend['parsed_date'].dt.year
-                df_trend['month'] = df_trend['parsed_date'].dt.month
+                    df_trend['parsed_date'] = df_trend['Tanggal'].apply(clean_and_parse_date)
+                    df_trend['year'] = df_trend['parsed_date'].dt.year
+                    df_trend['month'] = df_trend['parsed_date'].dt.month
 
-                df_2026 = df_trend[df_trend['year'] == 2026]
-                if not df_2026.empty:
-                    m_2026 = df_2026.groupby('month').size()
-                    for m in range(1, 13):
-                        tren_2026[m-1] = int(m_2026.get(m, 0))
+                    df_2026 = df_trend[df_trend['year'] == 2026]
+                    if not df_2026.empty:
+                        m_2026 = df_2026.groupby('month').size()
+                        for m in range(1, 13):
+                            tren_2026[m-1] = int(m_2026.get(m, 0))
 
-                df_2025 = df_trend[df_trend['year'] == 2025]
-                if not df_2025.empty:
-                    m_2025 = df_2025.groupby('month').size()
-                    for m in range(1, 13):
-                        tren_2025[m-1] = int(m_2025.get(m, 0))
+                    df_2025 = df_trend[df_trend['year'] == 2025]
+                    if not df_2025.empty:
+                        m_2025 = df_2025.groupby('month').size()
+                        for m in range(1, 13):
+                            tren_2025[m-1] = int(m_2025.get(m, 0))
         except Exception as ex_t:
             print(f"Info tren error: {ex_t}")
 
@@ -298,6 +325,10 @@ class FilterRequest(BaseModel):
 
 @app.post("/api/stats")
 def get_filtered_stats(req: FilterRequest):
+    global IS_DOWNLOADING
+    if IS_DOWNLOADING and CACHE_MERAH_DF is None:
+         return {"error": "Data sedang dipersiapkan. Mohon tunggu."}
+         
     df_global = get_cached_merah_df()
     
     if df_global.empty:

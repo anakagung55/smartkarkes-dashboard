@@ -931,7 +931,7 @@
 
             showLoading(true, "Memuat Data Portal...", "Mengambil data rekapitulasi awal.");
             try {
-                let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
+                let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
 
                 const response = await fetch(apiUrl);
                 state.dataLanding = await response.json();
@@ -962,7 +962,7 @@
             // 1. Sync nilai Dropdown Tren Bulanan agar ikut berubah
             elFilterNegaraTren.value = state.filterGlobal.negara;
             
-            let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
+            let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
             if (startDate && endDate) {
                 apiUrl.searchParams.append('start_date', startDate);
                 apiUrl.searchParams.append('end_date', endDate);
@@ -1014,7 +1014,7 @@
         async function syncDataFromServer() {
             showLoading(true, "Sinkronisasi Cloud...", "Sedang mendownload ulang data...");
             try {
-                await fetch('https://smartkarkes-dashboard.onrender.com/api/sync');
+                await fetch('http://127.0.0.1:8000/api/sync');
                 await applyGlobalFilters();
                 showToast("Sinkronisasi data berhasil diperbarui!", "success");
             } catch(e) {
@@ -1406,7 +1406,7 @@
             
             showLoading(true, "Memperbarui Grafik Tren...", "Mengambil data tren bulanan.");
             try {
-                let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
+                let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
                 if (negara && negara !== "Semua Negara") {
                     apiUrl.searchParams.append('negara', negara);
                 }
@@ -1569,7 +1569,7 @@
             updateFilterPills();
 
             try {
-                const response = await fetch('https://smartkarkes-dashboard.onrender.com/api/stats', {
+                const response = await fetch('http://127.0.0.1:8000/api/stats', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ gejala: activeGejala, diagnosis: activeDiagnosis, periode: activePeriode })
