@@ -10,11 +10,14 @@ load_dotenv()
 
 app = FastAPI(title="Backend Smartkarkes AI - Realtime Sheets")
 
+# KONFIGURASI CORS YANG BENAR & ANTI-GAGAL
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    # Jika masih error pakai "*", ganti baris di bawah dengan:
+    # allow_origins=["https://jade-marshmallow-ebabf5.netlify.app", "https://dynamic-scone-3b90dd.netlify.app"],
+    allow_origins=["*"], 
+    allow_credentials=False, # WAJIB FALSE jika allow_origins=["*"]
+    allow_methods=["GET", "POST", "OPTIONS"], # JANGAN gunakan "*", sebutkan methodnya secara eksplisit
     allow_headers=["*"],
 )
 
