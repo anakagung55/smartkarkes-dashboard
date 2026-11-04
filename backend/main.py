@@ -18,10 +18,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"status": "Backend Smartkarkes Aktif!"}
+
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1fqp6xsIxYOkF-SWaEUBae1pW7BKu9RMiI7xyjOuvB5o/gviz/tq?tqx=out:csv&sheet=MERAH"
 LANDING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1p-QhV_ZgbLqKy77DWtdwCsUVcdOPauA9UMfMeb8c7NQ/gviz/tq?tqx=out:csv&sheet=Sheet1"
 
 CACHE_LANDING_DF = None
+CACHE_MERAH_DF = None
 
 def get_cached_landing_df(force_reload: bool = False):
     global CACHE_LANDING_DF
@@ -40,23 +45,32 @@ def get_cached_landing_df(force_reload: bool = False):
                 CACHE_LANDING_DF = pd.DataFrame()
     return CACHE_LANDING_DF.copy()
 
-def load_data_from_sheets():
-    try:
-        df = pd.read_csv(SHEET_CSV_URL)
-        df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-        return df
-    except Exception as e:
-        print(f"⚠️ Gagal memuat data merah dari Google Sheets: {e}")
-        if os.path.exists("data/data_merah.csv"):
-            df = pd.read_csv("data/data_merah.csv")
+def get_cached_merah_df(force_reload: bool = False):
+    global CACHE_MERAH_DF
+    if CACHE_MERAH_DF is None or force_reload:
+        try:
+            print("🔄 Sedang mendownload ulang data dari Google Sheets (Data Merah)...")
+            df = pd.read_csv(SHEET_CSV_URL)
             df.columns = df.columns.str.strip().str.replace('\ufeff', '')
-            return df
-        return pd.DataFrame()
+            CACHE_MERAH_DF = df
+        except Exception as e:
+            print(f"⚠️ Gagal load data merah: {e}")
+            if os.path.exists("data/data_merah.csv"):
+                CACHE_MERAH_DF = pd.read_csv("data/data_merah.csv")
+                CACHE_MERAH_DF.columns = CACHE_MERAH_DF.columns.str.strip().str.replace('\ufeff', '')
+            else:
+                CACHE_MERAH_DF = pd.DataFrame()
+    return CACHE_MERAH_DF.copy()
 
 @app.get("/api/sync")
 def sync_data():
-    df = get_cached_landing_df(force_reload=True)
-    return {"status": "success", "total_rows": len(df)}
+    df_landing = get_cached_landing_df(force_reload=True)
+    df_merah = get_cached_merah_df(force_reload=True)
+    return {
+        "status": "success", 
+        "total_landing": len(df_landing), 
+        "total_merah": len(df_merah)
+    }
 
 @app.get("/api/landing")
 def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] = None, negara: Optional[str] = None):
@@ -122,7 +136,7 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
 
         verif_raw_agg = {}
         try:
-            df_merah = load_data_from_sheets()
+            df_merah = get_cached_merah_df()
             n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
             h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
             d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
@@ -192,7 +206,7 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         tren_2026 = [0] * 12
         tren_2025 = [0] * 12
         try:
-            df_trend = load_data_from_sheets()
+            df_trend = get_cached_merah_df()
             n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_trend.columns else df_trend.columns[3]
             if negara and negara != "Semua Negara":
                 df_trend = df_trend[df_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
@@ -281,7 +295,7 @@ class FilterRequest(BaseModel):
 
 @app.post("/api/stats")
 def get_filtered_stats(req: FilterRequest):
-    df_global = load_data_from_sheets()
+    df_global = get_cached_merah_df()
     
     if df_global.empty:
         return {"error": "Data Google Sheets kosong atau tidak dapat diakses"}
