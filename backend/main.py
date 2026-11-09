@@ -14,12 +14,9 @@ load_dotenv()
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1fqp6xsIxYOkF-SWaEUBae1pW7BKu9RMiI7xyjOuvB5o/gviz/tq?tqx=out:csv&sheet=MERAH"
 LANDING_SHEET_URL = "https://docs.google.com/spreadsheets/d/1p-QhV_ZgbLqKy77DWtdwCsUVcdOPauA9UMfMeb8c7NQ/gviz/tq?tqx=out:csv&sheet=Sheet1"
 
-# ==========================================
-# SISTEM CACHE RAM, THREAD LOCK & DEBUGGER
-# ==========================================
 CACHE_LANDING_DF = None
 CACHE_MERAH_DF = None
-DATA_LOCK = threading.Lock() # Sistem Antrean untuk mencegah "Double Download"
+DATA_LOCK = threading.Lock()
 
 def process_landing_data(df):
     df.columns = df.columns.str.strip().str.replace('\ufeff', '')
@@ -46,42 +43,20 @@ def process_merah_data(df):
     return df
 
 def force_load_all_data():
-    """Fungsi yang dikunci (Lock) agar proses narik data tidak tabrakan/dobel"""
     global CACHE_LANDING_DF, CACHE_MERAH_DF
-    
     with DATA_LOCK:
-        # Jika data sudah diisi oleh thread/request lain yang masuk duluan, batalkan narik data lagi
-        if CACHE_LANDING_DF is not None and CACHE_MERAH_DF is not None:
-            return
-
-        print("\n🚀 [LOCKED] Memulai proses tarikan data secara eksklusif...")
-        start_total = time.time()
-        
-        # Load Landing
-        start_l = time.time()
+        if CACHE_LANDING_DF is not None and CACHE_MERAH_DF is not None: return
         try:
-            df_l = pd.read_csv(LANDING_SHEET_URL)
-            CACHE_LANDING_DF = process_landing_data(df_l)
-            print(f"✅ Landing Selesai! (Waktu: {time.time() - start_l:.2f} detik)")
-        except Exception as e:
-            print(f"⚠️ Error Landing: {e}")
+            CACHE_LANDING_DF = process_landing_data(pd.read_csv(LANDING_SHEET_URL))
+        except Exception:
             CACHE_LANDING_DF = pd.DataFrame()
-
-        # Load Merah
-        start_m = time.time()
         try:
-            df_m = pd.read_csv(SHEET_CSV_URL)
-            CACHE_MERAH_DF = process_merah_data(df_m)
-            print(f"✅ Data Merah Selesai! (Waktu: {time.time() - start_m:.2f} detik)")
-        except Exception as e:
-            print(f"⚠️ Error Merah: {e}")
+            CACHE_MERAH_DF = process_merah_data(pd.read_csv(SHEET_CSV_URL))
+        except Exception:
             CACHE_MERAH_DF = pd.DataFrame()
-
-        print(f"🏁 [ALL DONE] Total waktu persiapan Google Sheets: {time.time() - start_total:.2f} detik\n")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Langsung jalankan proses load data diam-diam tepat saat server dinyalakan
     thread = threading.Thread(target=force_load_all_data)
     thread.start()
     yield
@@ -97,51 +72,36 @@ app.add_middleware(
 )
 
 def get_cached_landing_df():
-    if CACHE_LANDING_DF is None:
-        force_load_all_data() # Jika belum siap, akan disuruh antre menunggu tarikan selesai
+    if CACHE_LANDING_DF is None: force_load_all_data()
     return CACHE_LANDING_DF.copy()
 
 def get_cached_merah_df():
-    if CACHE_MERAH_DF is None:
-        force_load_all_data()
+    if CACHE_MERAH_DF is None: force_load_all_data()
     return CACHE_MERAH_DF.copy()
 
 def update_cache_background():
     global CACHE_LANDING_DF, CACHE_MERAH_DF
-    print("\n🔄 [SYNC] Proses sinkronisasi data manual dimulai...")
-    start_sync = time.time()
     try:
         CACHE_LANDING_DF = process_landing_data(pd.read_csv(LANDING_SHEET_URL))
         CACHE_MERAH_DF = process_merah_data(pd.read_csv(SHEET_CSV_URL))
-        print(f"✅ [SYNC] Sinkronisasi selesai dalam {time.time() - start_sync:.2f} detik\n")
     except Exception as e:
-        print(f"⚠️ [SYNC] Error: {e}")
+        pass
 
 @app.get("/api/sync")
 def sync_data(background_tasks: BackgroundTasks):
     background_tasks.add_task(update_cache_background)
-    return {
-        "status": "success", 
-        "message": "Sinkronisasi berjalan di belakang layar.",
-        "total_landing": len(CACHE_LANDING_DF) if CACHE_LANDING_DF is not None else 0,
-        "total_merah": len(CACHE_MERAH_DF) if CACHE_MERAH_DF is not None else 0
-    }
+    return {"status": "success", "message": "Sinkronisasi berjalan di belakang layar."}
 
 @app.get("/api/landing")
 def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] = None, negara: Optional[str] = None):
-    start_api = time.time() # Mulai stopwach API
     try:
         df_landing = get_cached_landing_df()
-        if df_landing.empty:
-            return {"error": "Data kosong"}
+        if df_landing.empty: return {"error": "Data kosong"}
 
         if 'parsed_date' in df_landing.columns and start_date and end_date:
             s_date = pd.to_datetime(start_date)
             e_date = pd.to_datetime(end_date) + pd.Timedelta(days=1, microseconds=-1)
-            df_landing = df_landing[
-                (df_landing['parsed_date'] >= s_date) & 
-                (df_landing['parsed_date'] <= e_date)
-            ]
+            df_landing = df_landing[(df_landing['parsed_date'] >= s_date) & (df_landing['parsed_date'] <= e_date)]
 
         total_ppln = int(df_landing['Total Isian'].sum()) if 'Total Isian' in df_landing.columns else 0
         merah = int(df_landing['Berisiko'].sum()) if 'Berisiko' in df_landing.columns else 0
@@ -151,8 +111,8 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         landing_total_map = {}
         valid_countries = set()
         negara_col = next((c for c in df_landing.columns if 'negara' in c.lower()), None)
-        
         negara_data = []
+        
         if negara_col:
             df_landing[negara_col] = df_landing[negara_col].astype(str).str.strip()
             df_negara = df_landing.groupby(negara_col).agg({'Total Isian': 'sum', 'Berisiko': 'sum', 'Daerah Terjangkit': 'sum', 'Tidak Berisiko': 'sum'}).reset_index()
@@ -167,92 +127,119 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
                     negara_data.append({"negara": n_name, "total": t_val, "merah": int(row['Berisiko']) if 'Berisiko' in row else 0, "kuning": int(row['Daerah Terjangkit']) if 'Daerah Terjangkit' in row else 0, "hijau": int(row['Tidak Berisiko']) if 'Tidak Berisiko' in row else 0})
 
         top_negara_name = negara_data[0]['negara'] if negara_data else '-'
-        interpretasi = f"Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN), tercatat akumulasi sebanyak **{total_ppln:,}** total kedatangan. Mayoritas penumpang berada pada status **Hijau / Tidak Berisiko** sebanyak **{hijau:,}** orang. Namun, terdapat indikasi **{merah:,} penumpang berstatus Merah (Berisiko)** yang memerlukan verifikasi lanjutan, serta **{kuning:,}** penumpang dari area Daerah Terjangkit (Kuning). Negara penyumbang kedatangan terbesar saat ini adalah **{top_negara_name}**."
+        interpretasi = f"Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN), tercatat akumulasi sebanyak **{total_ppln:,}** total kedatangan."
 
-        sorted_valid_countries = sorted(list(valid_countries), key=len, reverse=True)
-        verif_raw_agg = {}
-        try:
-            df_merah = get_cached_merah_df()
-            n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
-            h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
-            d_col = next((c for c in df_merah.columns if 'diag' in c.lower() or 'sakit' in c.lower() or 'keluhan' in c.lower()), None)
-
-            if n_col:
-                for _, r in df_merah.iterrows():
-                    raw_negara = str(r.get(n_col, '')).strip()
-                    if not raw_negara or raw_negara.lower() in ['nan', '-', '', 'nat']: continue
-                    
-                    status_v = str(r.get(h_col, '')) if h_col else ''
-                    d_val = str(r.get(d_col, '')).strip() if d_col else ''
-                    
-                    clean_diag = d_val if d_val and d_val not in ['-', '', 'nan'] and (len(d_val) > 2 or not d_val.isupper()) else ""
-                    
-                    matched_countries = []
-                    raw_lower = raw_negara.lower()
-                    for c_name in sorted_valid_countries:
-                        if c_name.lower() in raw_lower:
-                            matched_countries.append(c_name)
-                            raw_lower = raw_lower.replace(c_name.lower(), '')
-                    if not matched_countries: matched_countries = [raw_negara]
-
-                    for negara_name in matched_countries:
-                        key = negara_name.strip()
-                        if not key or len(key) <= 1: continue
-                        if key not in verif_raw_agg: verif_raw_agg[key] = {"verif_merah": 0, "t_respon": 0, "t_valid": 0, "diag_list": []}
-                        verif_raw_agg[key]["verif_merah"] += 1
-                        if 'tidak respons' in status_v.lower(): verif_raw_agg[key]["t_respon"] += 1
-                        elif 'tidak dilakukan' in status_v.lower() or 'belum' in status_v.lower(): verif_raw_agg[key]["t_valid"] += 1
-                        if clean_diag: verif_raw_agg[key]["diag_list"].append(clean_diag)
-        except Exception as ex:
-            print(f"Info verifikasi error: {ex}")
-
-        verif_data = []
-        for negara_name, dat in verif_raw_agg.items():
-            v_count = dat["verif_merah"]
-            t_resp = dat["t_respon"]
-            t_dival = dat["t_valid"]
-            terverifikasi = max(0, v_count - t_dival - t_resp)
-            cakupan_pct = round((terverifikasi / v_count * 100), 2) if v_count > 0 else 0.0
-            diag_counts = pd.Series(dat["diag_list"]).value_counts().head(2)
-            diag_str = "; ".join([f"{k} ({v})" for k, v in diag_counts.items()]) if not diag_counts.empty else "-"
-            total_riwayat_landing = landing_total_map.get(negara_name.lower(), "-")
-            verif_data.append({"negara": negara_name, "total_riwayat": total_riwayat_landing, "verif_merah": v_count, "terverifikasi": terverifikasi, "tidak_respon": t_resp, "tidak_dilakukan": t_dival, "cakupan_pct": cakupan_pct, "diagnosis": diag_str})
-
+        df_merah = get_cached_merah_df()
+        n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else df_merah.columns[3]
+        
+        # PERBAIKAN: TREN BULANAN
         tren_2026, tren_2025 = [0]*12, [0]*12
-        try:
-            df_trend = get_cached_merah_df()
-            n_col_trend = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_trend.columns else df_trend.columns[3]
-            if negara and negara != "Semua Negara":
-                df_trend = df_trend[df_trend[n_col_trend].astype(str).str.contains(negara, case=False, na=False)]
+        df_trend = df_merah.copy()
+        if negara and negara != "Semua Negara":
+            df_trend = df_trend[df_trend[n_col].astype(str).str.contains(negara, case=False, na=False)]
 
-            if 'trend_year' in df_trend.columns:
-                df_2026 = df_trend[df_trend['trend_year'] == 2026]
-                if not df_2026.empty:
-                    m_2026 = df_2026.groupby('trend_month').size()
-                    for m in range(1, 13): tren_2026[m-1] = int(m_2026.get(m, 0))
+        if 'trend_year' in df_trend.columns:
+            df_2026 = df_trend[df_trend['trend_year'] == 2026]
+            if not df_2026.empty:
+                m_2026 = df_2026.groupby('trend_month').size()
+                for m in range(1, 13): tren_2026[m-1] = int(m_2026.get(m, 0))
 
-                df_2025 = df_trend[df_trend['trend_year'] == 2025]
-                if not df_2025.empty:
-                    m_2025 = df_2025.groupby('trend_month').size()
-                    for m in range(1, 13): tren_2025[m-1] = int(m_2025.get(m, 0))
-        except Exception as ex_t:
-            print(f"Info tren error: {ex_t}")
+            df_2025 = df_trend[df_trend['trend_year'] == 2025]
+            if not df_2025.empty:
+                m_2025 = df_2025.groupby('trend_month').size()
+                for m in range(1, 13): tren_2025[m-1] = int(m_2025.get(m, 0))
 
+        # PERBAIKAN FATAL: RINCIAN BULANAN (BERGEJALA PER 100k)
         rincian_bulanan_data = []
-        try:
-            if 'parsed_date' in df_landing.columns and 'Total Isian' in df_landing.columns and 'Berisiko' in df_landing.columns:
-                df_monthly = df_landing.groupby(df_landing['parsed_date'].dt.to_period('M')).agg({'Total Isian': 'sum', 'Berisiko': 'sum'}).reset_index()
-                for _, row in df_monthly.iterrows():
-                    p_date = row['parsed_date']
-                    if pd.isna(p_date): continue
-                    tot_is, mer_is = int(row['Total Isian']), int(row['Berisiko'])
-                    rate_100k = round((mer_is / tot_is * 100000), 2) if tot_is > 0 else 0.0
-                    pct_val = round((mer_is / tot_is * 100), 2) if tot_is > 0 else 0.0
-                    rincian_bulanan_data.append({"tahun": str(p_date.year), "bulan": p_date.strftime('%B'), "tahun_bulan": p_date.strftime('%B %Y'), "total_riwayat": tot_is, "bergejala": mer_is, "per_100k": rate_100k, "persen": pct_val})
-        except Exception as e_rm: print(f"Error rincian bulanan: {e_rm}")
+        df_rincian = df_landing.copy()
+        
+        if negara and negara != "Semua Negara" and negara_col:
+            # Gunakan exact match & ubah paksa ke String agar tidak gagal jika ada cell kosong
+            df_rincian = df_rincian[df_rincian[negara_col].astype(str).str.strip().str.lower() == negara.lower()]
 
-        end_api = time.time()
-        print(f"⚡ [DEBUG-CEPAT] /api/landing selesai di-filter dalam {end_api - start_api:.4f} detik!")
+        if 'parsed_date' in df_rincian.columns and 'Total Isian' in df_rincian.columns and 'Berisiko' in df_rincian.columns:
+            df_monthly = df_rincian.groupby(df_rincian['parsed_date'].dt.to_period('M')).agg({'Total Isian': 'sum', 'Berisiko': 'sum'}).reset_index()
+            for _, row in df_monthly.iterrows():
+                p_date = row['parsed_date']
+                if pd.isna(p_date): continue
+                tot_is, mer_is = int(row['Total Isian']), int(row['Berisiko'])
+                rate_100k = round((mer_is / tot_is * 100000), 2) if tot_is > 0 else 0.0
+                pct_val = round((mer_is / tot_is * 100), 2) if tot_is > 0 else 0.0
+                rincian_bulanan_data.append({"tahun": str(p_date.year), "bulan": p_date.strftime('%B'), "tahun_bulan": p_date.strftime('%B %Y'), "total_riwayat": tot_is, "bergejala": mer_is, "per_100k": rate_100k, "persen": pct_val})
+
+        # +++ TAMBAHKAN BLOK INI UNTUK MENGHITUNG DATA TABEL VERIFIKASI +++
+        verif_data = []
+        h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
+        diag_col = next((c for c in df_merah.columns if 'diagnosis' in c.lower()), None)
+        
+        if n_col and h_col:
+            country_stats = {}
+            # Filter df_merah untuk tabel verifikasi agar sesuai rentang tanggal (jika ada)
+            df_merah_verif = df_merah.copy()
+            if 'parsed_date' in df_merah_verif.columns and start_date and end_date:
+                s_date = pd.to_datetime(start_date)
+                e_date = pd.to_datetime(end_date) + pd.Timedelta(days=1, microseconds=-1)
+                df_merah_verif = df_merah_verif[(df_merah_verif['parsed_date'] >= s_date) & (df_merah_verif['parsed_date'] <= e_date)]
+
+            for _, row in df_merah_verif.iterrows():
+                countries_str = str(row[n_col]).replace(';', ',').replace('•', ',')
+                hasil = str(row[h_col]).strip() if pd.notna(row[h_col]) else ""
+                diag = str(row[diag_col]).strip() if diag_col and pd.notna(row[diag_col]) else ""
+                
+                for c in countries_str.split(','):
+                    c = c.strip().title()
+                    if not c or c.lower() in ['nan', '-', '']: continue
+                        
+                    if c not in country_stats:
+                        country_stats[c] = {
+                            "verif_merah": 0, "terverifikasi": 0, 
+                            "tidak_respon": 0, "tidak_dilakukan": 0, "diagnoses": {}
+                        }
+                    
+                    country_stats[c]["verif_merah"] += 1
+                    
+                    hasil_low = hasil.lower()
+                    if 'tidak respons' in hasil_low:
+                        country_stats[c]["tidak_respon"] += 1
+                    elif 'tidak dilakukan' in hasil_low:
+                        country_stats[c]["tidak_dilakukan"] += 1
+                    else:
+                        country_stats[c]["terverifikasi"] += 1
+                        
+                    if diag and diag.lower() not in ['-', '', 'a', 'nan']:
+                        country_stats[c]["diagnoses"][diag] = country_stats[c]["diagnoses"].get(diag, 0) + 1
+            
+            for c, stats in country_stats.items():
+                # Ambil total_riwayat dari dictionary landing_total_map yg sudah kamu buat di atas
+                tot_riwayat = landing_total_map.get(c.lower(), stats["verif_merah"])
+                
+                # --- PERBAIKAN FORMAT DIAGNOSIS ---
+                top_diag = "-"
+                if stats["diagnoses"]:
+                    # Urutkan diagnosis berdasarkan jumlah (terbanyak ke sedikit)
+                    sorted_diags = sorted(stats["diagnoses"].items(), key=lambda item: item[1], reverse=True)
+                    
+                    # Ambil 2 diagnosis teratas untuk ditampilkan (bisa disesuaikan jumlahnya)
+                    top_n_diags = sorted_diags[:2] 
+                    
+                    # Format menjadi string: "ISPA (287); Cough (70)"
+                    diag_strings = [f"{diag_name} ({count})" for diag_name, count in top_n_diags]
+                    top_diag = "; ".join(diag_strings)
+                # ----------------------------------
+                    
+                cakupan = round((stats["terverifikasi"] / stats["verif_merah"]) * 100, 2) if stats["verif_merah"] > 0 else 0.0
+                    
+                verif_data.append({
+                    "negara": c,
+                    "total_riwayat": tot_riwayat,
+                    "verif_merah": stats["verif_merah"],
+                    "terverifikasi": stats["terverifikasi"],
+                    "tidak_respon": stats["tidak_respon"],
+                    "tidak_dilakukan": stats["tidak_dilakukan"],
+                    "cakupan_pct": cakupan,
+                    "diagnosis": top_diag
+                })
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         return {
             "total_ppln": total_ppln, "merah": merah, "kuning": kuning, "hijau": hijau,
@@ -266,13 +253,12 @@ class FilterRequest(BaseModel):
     gejala: str | None = None
     diagnosis: str | None = None
     periode: str | None = "semua"
+    negara: str | None = "Semua Negara"
 
 @app.post("/api/stats")
 def get_filtered_stats(req: FilterRequest):
-    start_api = time.time() # Mulai stopwatch API
-    
     df_global = get_cached_merah_df()
-    if df_global.empty: return {"error": "Data Google Sheets kosong atau tidak dapat diakses"}
+    if df_global.empty: return {"error": "Data kosong"}
 
     tanggal_terakhir = "28/10/2026"
     if 'Tanggal' in df_global.columns:
@@ -298,6 +284,16 @@ def get_filtered_stats(req: FilterRequest):
         fixed_top_diag = [k for k, v in d_series.value_counts().head(10).items()]
 
     df_filtered = df_global.copy()
+
+    # PERBAIKAN FATAL: FILTER DASHBOARD STATS (BAWAH)
+    # Keluarkan deklarasi n_col_stats agar bisa dipakai untuk menghitung Top Negara nanti
+    n_col_stats = next((c for c in df_filtered.columns if 'riwayat' in c.lower() or 'negara' in c.lower()), None)
+    if not n_col_stats and len(df_filtered.columns) > 3:
+        n_col_stats = df_filtered.columns[3]
+        
+    if req.negara and req.negara != "Semua Negara":
+        if n_col_stats:
+            df_filtered = df_filtered[df_filtered[n_col_stats].astype(str).str.contains(req.negara, case=False, na=False)]
 
     if req.periode and req.periode != "semua" and 'parsed_date' in df_filtered.columns:
         if req.periode == "this_month":
@@ -341,26 +337,33 @@ def get_filtered_stats(req: FilterRequest):
             top_diag_data.append({"val": d_item, "count": count, "pct": round((count / base_total) * 100, 2)})
         top_diag_data.sort(key=lambda x: x['count'], reverse=True)
 
-    g_txt = req.gejala if req.gejala else "Keseluruhan Gejala"
-    d_txt = req.diagnosis if req.diagnosis else "Keseluruhan Diagnosis"
     top_g_name = top_gejala_data[0]['val'] if top_gejala_data and top_gejala_data[0]['count'] > 0 else 'Tidak ada'
     top_d_name = top_diag_data[0]['val'] if top_diag_data and top_diag_data[0]['count'] > 0 else 'Tidak ada'
 
-    pembacaan = f"Berdasarkan pemantauan data real-time Google Sheets untuk periode **{req.periode}**, tercatat akumulasi sebanyak **{total_merah:,} kasus PPLN**. Dari total tersebut, tingkat rasio verifikasi lapangan mencapai **{cakupan_pct}%** dengan **{terverifikasi:,} kasus tuntas**. Analisis irisan menunjukkan bahwa indikasi gejala dominan saat ini adalah **{top_g_name}**, dengan mayoritas diagnosis terarah pada **{top_d_name}**. Kondisi ini menuntut kesiagaan tinggi di posko kedatangan guna menekan angka penumpang yang belum memberikan respons (**{tidak_respon:,} kasus**)."
-    
-    rekomendasi = [
-        f"Intensifkan prosedur kekarantinaan dan validasi dokumen kesehatan mendalam pada manifes dengan profil gejala **{g_txt.lower()}**.",
-        f"Lakukan pelacakan aktif (tracing) terhadap **{tidak_respon} penumpang** berstatus 'tidak respons' untuk memastikan status kesehatan mereka aman.",
-        f"Koordinasikan penanganan medis darurat bersama tim surveilans wilayah kerja jika ditemukan lonjakan pada diagnosis **{top_d_name}**.",
-        "Pastikan seluruh rekapitulasi harian pada Google Sheets tersinkronisasi secara real-time untuk mendukung ketepatan kebijakan."
-    ]
+    # +++ TAMBAHKAN BLOK INI UNTUK MENGHITUNG TOP 10 NEGARA DINAMIS +++
+    top_negara_data = []
+    if n_col_stats:
+        all_n = []
+        for val in df_filtered[n_col_stats].dropna():
+            cleaned_str = str(val).replace(';', ',') # Pisahkan jika ada koma/titik koma
+            for item in cleaned_str.split(','):
+                ci = item.strip().title()
+                if ci and len(ci) > 2 and ci != '-': 
+                    all_n.append(ci)
+        
+        # Ambil 10 teratas
+        fixed_top_negara = pd.Series(all_n).value_counts().head(10)
+        for k, v in fixed_top_negara.items():
+            top_negara_data.append({"negara": k, "verif_merah": int(v)})
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    end_api = time.time()
-    print(f"⚡ [DEBUG-CEPAT] /api/stats (Terapkan) selesai di-filter dalam {end_api - start_api:.4f} detik!")
+    n_txt = f"dari negara **{req.negara}**" if req.negara and req.negara != "Semua Negara" else "secara keseluruhan"
+    pembacaan = f"Berdasarkan pemantauan data real-time Google Sheets {n_txt} untuk periode **{req.periode}**, tercatat akumulasi sebanyak **{total_merah:,} kasus PPLN**."
 
     return {
         "tanggal_terakhir": tanggal_terakhir, "total_merah": total_merah, "terverifikasi": terverifikasi,
         "tidak_respon": tidak_respon, "tidak_divalidasi": tidak_divalidasi, "cakupan_pct": cakupan_pct,
         "status_tindak_lanjut": verif_counts, "top_gejala": top_gejala_data, "top_diagnosis": top_diag_data,
-        "pembacaan": pembacaan, "rekomendasi": rekomendasi
+        "top_negara": top_negara_data, # <--- PASTIKAN KEY INI DITAMBAHKAN
+        "pembacaan": pembacaan, "rekomendasi": []
     }
