@@ -45,9 +45,12 @@
                 <i class="fas fa-shield-virus mr-2"></i> Portal Data PPLN & Analisis Verifikasi
             </h1>
             <div class="flex items-center gap-2">
-                <button onclick="scrollToDashboard()" class="text-xs bg-teal-700 hover:bg-teal-600 px-3 py-2 rounded-lg font-medium transition-colors border border-teal-600 flex items-center gap-1.5 shadow-sm">
-                    <i class="fa-solid fa-arrow-down"></i> Dashboard PPLN Merah
-                </button>
+                <a href="dashboard.html" target="_blank" class="text-xs bg-teal-700 hover:bg-teal-600 px-3 py-2 rounded-lg font-medium transition-colors border border-teal-600 flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Dashboard PPLN Merah
+                </a>
+                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg font-bold transition-colors flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-virus-covid"></i> Kelola Negara Terjangkit
+                </a>
                 <button id="btn-sync" onclick="syncDataFromServer()" class="text-xs bg-emerald-600 hover:bg-emerald-700 px-3 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5" title="Sinkronisasi ulang data">
                     <i class="fas fa-sync-alt"></i> Sync Data
                 </button>
@@ -147,9 +150,9 @@
                     <i class="fas fa-plane-arrival absolute -right-4 -bottom-4 text-7xl text-teal-100 opacity-50 transform -rotate-12"></i>
                     <p class="text-xs font-bold text-gray-500 mb-1">Total Riwayat Perjalanan</p>
                     <h3 class="text-3xl font-black text-teal-700 mb-1" id="val-total">0</h3>
-                    <button onclick="scrollToDashboard()" class="inline-flex items-center text-xs font-bold text-teal-700 hover:text-teal-900 transition-colors gap-1 mt-auto z-10">
-                        <span>Dashboard PPLN Merah</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                    </button>
+                    <a href="dashboard.html" target="_blank" class="inline-flex items-center text-xs font-bold text-teal-700 hover:text-teal-900 transition-colors gap-1 mt-auto z-10">
+                        <span>Dashboard PPLN Merah</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
                 </div>
 
                 <div class="lg:col-span-3 flex flex-col">
@@ -173,7 +176,7 @@
                             <p class="text-xs font-bold text-gray-700 mb-0.5" id="pct-kuning">0%</p>
                             <p class="text-[10px] text-gray-400">daerah terjangkit</p>
                         </div>
-                        <div class="p-4 bg-red-50/50 hover:bg-red-50 transition-colors relative group cursor-pointer border-b-4 md:border-b-0 border-red-500" onclick="scrollToDashboard()">
+                        <div class="p-4 bg-red-50/50 hover:bg-red-50 transition-colors relative group cursor-pointer border-b-4 md:border-b-0 border-red-500" onclick="window.open('dashboard.html', '_blank')">
                             <p class="text-[10px] font-bold text-red-700 mb-1 leading-tight uppercase">Bergejala Deklarasi</p>
                             <h4 class="text-xl font-black text-red-600 mb-0.5" id="val-merah">0</h4>
                             <p class="text-xs font-bold text-red-700 mb-0.5" id="pct-merah">0%</p>
@@ -496,7 +499,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mt-4">
             <div class="p-4 border-b border-gray-100">
                 <h3 class="text-lg font-bold text-gray-800">Hasil Verifikasi berdasarkan Riwayat Perjalanan</h3>
-                <p class="text-xs text-gray-500 mt-0.5 mb-3">Tinjauan verifikasi penumpang berstatus merah untuk menentukan prioritas tindak lanjut.</p>
+                <p class="text-xs text-gray-500 mt-0.5 mb-3">Tinjauan verifikasi penumpang untuk menentukan prioritas tindak lanjut secara fleksibel.</p>
                 <div class="flex flex-wrap gap-2">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-50 text-teal-700 border border-teal-200 shadow-sm">
                         Periode: <span id="badge-periode-verif" class="ml-1 text-gray-700 font-medium">Semua Waktu</span>
@@ -504,6 +507,10 @@
                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-50 text-teal-700 border border-teal-200 shadow-sm">
                         Filter: <span id="badge-negara-verif" class="ml-1 text-gray-700 font-medium">Semua Negara</span>
                     </span>
+                    <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" title="Klik untuk memperbarui daftar negara terjangkit bulanan" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 shadow-sm transition-colors">
+                        <span>Acuan Terjangkit: <strong id="badge-acuan-terjangkit" class="font-extrabold">September 2026</strong></span>
+                        <i class="fa-solid fa-pen-to-square text-[10px] text-amber-700"></i>
+                    </a>
                 </div>
             </div>
 
@@ -518,10 +525,11 @@
                             <option value="100">≥ 100 Kasus Merah</option>
                         </select>
                     </div>
-                    <div class="w-full sm:w-56">
-                        <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Urutkan Berdasarkan</label>
+                    <div class="w-full sm:w-64">
+                        <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Urutkan Tabel Berdasarkan</label>
                         <select id="filter-urutkan-verif" class="block w-full pl-3 pr-10 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white cursor-pointer font-medium">
                             <option value="verif_desc" selected>VERIF Merah Terbanyak</option>
+                            <option value="kuning_desc">Status Kuning Terbanyak (Terjangkit)</option>
                             <option value="cakupan_asc">Cakupan Terendah (%)</option>
                             <option value="respon_desc">Tidak Respons Terbanyak</option>
                         </select>
@@ -531,20 +539,37 @@
 
             <div class="p-4 border-b border-gray-100 bg-white">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm">
-                        <p class="text-[11px] font-bold text-gray-500 mb-1">Negara Prioritas</p>
-                        <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-prioritas-negara">-</h4>
-                        <p class="text-xs text-gray-600" id="card-prioritas-val">Risiko tinggi</p>
+                    <!-- KARTU NEGARA PRIORITAS FLEKSIBEL -->
+                    <div class="bg-teal-50/40 rounded-lg p-3 border border-teal-200/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                            <p class="text-[11px] font-bold text-teal-800 uppercase tracking-wide">Negara Prioritas</p>
+                            <select id="mode-prioritas-verif" title="Ganti kriteria penentu Negara Prioritas" class="px-2 py-0.5 text-[11px] font-bold text-teal-800 bg-white border border-teal-300 rounded-md focus:ring-teal-500 focus:border-teal-500 cursor-pointer shadow-2xs">
+                                <option value="endemik" selected>Mode: Endemik + Merah</option>
+                                <option value="kuning">Mode: Status Kuning</option>
+                                <option value="merah">Mode: Status Merah</option>
+                                <option value="cakupan">Mode: Cakupan Terendah</option>
+                            </select>
+                        </div>
+                        <div>
+                            <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-prioritas-negara">-</h4>
+                            <p class="text-xs text-gray-700 font-medium" id="card-prioritas-val">Risiko tinggi</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm">
-                        <p class="text-[11px] font-bold text-gray-500 mb-1">Tidak Respons Terbanyak</p>
-                        <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-respon-negara">-</h4>
-                        <p class="text-xs text-gray-600" id="card-respon-val">0 tidak respons</p>
+
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm flex flex-col justify-between">
+                        <p class="text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Tidak Respons Terbanyak</p>
+                        <div>
+                            <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-respon-negara">-</h4>
+                            <p class="text-xs text-gray-600" id="card-respon-val">0 tidak respons</p>
+                        </div>
                     </div>
-                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm">
-                        <p class="text-[11px] font-bold text-gray-500 mb-1">VERIF Merah Terbanyak</p>
-                        <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-verif-negara">-</h4>
-                        <p class="text-xs text-gray-600" id="card-verif-val">0 VERIF Merah</p>
+
+                    <div class="bg-gray-50 rounded-lg p-3 border border-gray-100 shadow-sm flex flex-col justify-between">
+                        <p class="text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">VERIF Merah Terbanyak</p>
+                        <div>
+                            <h4 class="text-base font-black text-gray-800 mb-0.5" id="card-verif-negara">-</h4>
+                            <p class="text-xs text-gray-600" id="card-verif-val">0 VERIF Merah</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -556,6 +581,7 @@
                             <th class="py-2 px-3 font-bold w-10 text-center">No</th>
                             <th class="py-2 px-3 font-bold">Negara</th>
                             <th class="py-2 px-3 font-bold text-right">Total Riwayat</th>
+                            <th class="py-2 px-3 font-bold text-right text-amber-600">Kuning</th>
                             <th class="py-2 px-3 font-bold text-right text-red-600">VERIF Merah</th>
                             <th class="py-2 px-3 font-bold text-right">Terverifikasi</th>
                             <th class="py-2 px-3 font-bold text-right">Tidak Respons</th>
@@ -565,7 +591,7 @@
                         </tr>
                     </thead>
                     <tbody id="tbody-verifikasi" class="text-gray-700 divide-y divide-gray-50">
-                        <tr><td colspan="9" class="py-3 text-center text-gray-400 font-medium">Memuat data verifikasi...</td></tr>
+                        <tr><td colspan="10" class="py-3 text-center text-gray-400 font-medium">Memuat data verifikasi...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -590,1151 +616,787 @@
             </details>
         </div>
 
-        <!-- ======================================================== -->
-        <!-- DASHBOARD VERIFIKASI PPLN STATUS MERAH -->
-        <!-- ======================================================== -->
-        <div id="detail-dashboard-section" class="pt-4 border-t-2 border-dashed border-gray-300 mt-8 space-y-4">
-            
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center text-xl shadow-sm flex-shrink-0">
-                        <i class="fa-solid fa-notes-medical"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 leading-tight">Dashboard Verifikasi PPLN Status Merah.</h2>
-                        <p class="text-xs text-teal-600 font-medium">Analisis mendalam berdasarkan gejala, diagnosis, & tindak lanjut</p>
-                        <div class="mt-2 flex gap-2">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-gray-50 text-teal-700 border border-teal-200 shadow-sm">
-                                Filter negara: <span id="badge-negara-detail" class="ml-1 text-gray-700 font-medium">Semua Negara</span>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="w-full md:w-auto">
-                    <div class="relative w-full sm:w-auto">
-                        <span class="absolute left-3 top-2.5 text-gray-400 text-xs"><i class="fa-regular fa-calendar"></i></span>
-                        <select id="periode-select-detail" onchange="changePeriodeDetail()" class="pl-8 pr-7 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full outline-none appearance-none cursor-pointer font-medium shadow-sm">
-                            <option value="semua">Semua Periode (Keseluruhan)</option>
-                            <option value="this_month">Bulan Ini (Oktober 2026)</option>
-                            <option value="2026">Sepanjang Tahun 2026</option>
-                        </select>
-                        <span class="absolute right-3 top-2.5 text-gray-400 text-[10px] pointer-events-none"><i class="fa-solid fa-chevron-down"></i></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Scorecards Detail -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">SSHP Merah</p>
-                        <h3 class="text-lg font-bold text-gray-800" id="score-sshp">-</h3>
-                        <p class="text-[10px] text-gray-400">Akumulasi</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-users"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">Terverifikasi</p>
-                        <h3 class="text-lg font-bold text-gray-800" id="score-verif-detail">-</h3>
-                        <p class="text-[10px] text-gray-400">Tervalidasi</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">Tidak Respon</p>
-                        <h3 class="text-lg font-bold text-gray-800" id="score-not-resp">-</h3>
-                        <p class="text-[10px] text-gray-400">Perlu tindak</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-user-xmark"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">Belum Verif</p>
-                        <h3 class="text-lg font-bold text-gray-800" id="score-unverif">-</h3>
-                        <p class="text-[10px] text-gray-400">Pending</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">Cakupan</p>
-                        <h3 class="text-lg font-bold text-gray-800" id="score-cakupan-detail">-%</h3>
-                        <p class="text-[10px] text-gray-400">Rasio valid</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-percent"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] text-gray-500 font-medium mb-0.5">Tanggal Terakhir</p>
-                        <h3 class="text-xs font-bold text-gray-800 mt-0.5 truncate max-w-[110px]" id="score-date">-</h3>
-                        <p class="text-[10px] text-gray-400">Pembaruan</p>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center text-sm flex-shrink-0">
-                        <i class="fa-solid fa-calendar-day"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filter Pills (Sekarang ada Pill Negara) -->
-            <div id="active-filters-container" class="hidden flex-wrap items-center gap-2">
-                <div id="pill-negara" class="hidden items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium border border-gray-300 shadow-sm cursor-pointer" onclick="clearNegaraDetail()">
-                    <span id="text-pill-negara">Negara: </span>
-                    <i class="fa-solid fa-xmark"></i>
-                </div>
-                <div id="pill-gejala" class="hidden items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium border border-gray-300 shadow-sm cursor-pointer" onclick="clearGejala()">
-                    <span id="text-pill-gejala">Gejala: </span>
-                    <i class="fa-solid fa-xmark"></i>
-                </div>
-                <div id="pill-diag" class="hidden items-center gap-2 bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium border border-gray-300 shadow-sm cursor-pointer" onclick="clearDiag()">
-                    <span id="text-pill-diag">Diagnosis: </span>
-                    <i class="fa-solid fa-xmark"></i>
-                </div>
-                <button class="text-xs text-gray-700 font-medium bg-white border border-gray-300 hover:bg-gray-100 px-3 py-1 rounded-full transition-colors shadow-sm" onclick="resetAllFilters()">
-                    Reset filter silang
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative">
-                <!-- Overlay Loading untuk bagian Bawah -->
-                <div id="analysis-loading" class="hidden absolute inset-0 bg-white/60 backdrop-blur-[2px] z-20 flex-col items-center justify-center rounded-xl">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mb-2"></div>
-                    <p class="text-xs text-teal-800 font-bold bg-white px-3 py-1 rounded-full shadow-sm">Memperbarui...</p>
-                </div>
-                
-                <!-- 1. KOTAK NEGARA (Interaktif) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                    <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                        <h2 class="font-bold text-gray-700 text-xs tracking-wide">Negara Asal (Top 10) <span id="title-negara-aktif" class="hidden font-normal text-gray-500">— Aktif</span></h2>
-                    </div>
-                    <ul id="list-negara-detail" class="p-2 space-y-1 overflow-y-auto custom-scroll max-h-[280px]">
-                        <li class="p-3 text-center text-gray-400 text-xs">Memuat data negara...</li>
-                    </ul>
-                </div>
-
-                <!-- 2. KOTAK GEJALA -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                    <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                        <h2 class="font-bold text-gray-700 text-xs tracking-wide">Analisis Gejala <span id="title-gejala-aktif" class="hidden font-normal text-gray-500">— Aktif</span></h2>
-                    </div>
-                    <ul id="list-gejala" class="p-2 space-y-1 overflow-y-auto custom-scroll max-h-[280px]">
-                        <li class="p-3 text-center text-gray-400 text-xs">Memuat data gejala...</li>
-                    </ul>
-                </div>
-
-                <!-- 3. KOTAK DIAGNOSIS -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                    <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                        <h2 class="font-bold text-gray-700 text-xs tracking-wide">Top 10 Diagnosis <span id="title-diag-aktif" class="hidden font-normal text-gray-500">— Aktif</span></h2>
-                    </div>
-                    <ul id="list-diagnosis" class="p-2 space-y-1 overflow-y-auto custom-scroll max-h-[280px]">
-                        <li class="p-3 text-center text-gray-400 text-xs">Memuat data diagnosis...</li>
-                    </ul>
-                </div>
-
-                <!-- 4. KOTAK TINDAK LANJUT -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-                    <div class="p-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center flex-shrink-0 sticky top-0 z-10">
-                        <h2 class="font-bold text-gray-700 text-xs tracking-wide">Status Tindak Lanjut</h2>
-                    </div>
-                    <ul id="list-status-tindak-lanjut" class="p-2 space-y-1 text-xs overflow-y-auto custom-scroll max-h-[280px]">
-                        <li class="p-3 text-center text-gray-400 text-xs">Memuat status...</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Interpretasi Digabung -->
-            <details class="group bg-teal-50/50 border-t border-teal-100 p-4 transition-all duration-300 w-full">
-                <summary class="flex items-center justify-between cursor-pointer list-none outline-none">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-lg flex-shrink-0">
-                            <i class="fa-solid fa-lightbulb"></i>
-                        </div>
-                        <h4 class="font-bold text-teal-800 text-xs uppercase tracking-wide m-0">Interpretasi Analisis • Dashboard Detail</h4>
-                    </div>
-                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                        <i class="fa-solid fa-chevron-down text-teal-600 transition-transform duration-300 group-open:rotate-180"></i>
-                    </div>
-                </summary>
-                <div class="mt-4 pl-14">
-                    <div id="analysis-text-main" class="text-xs sm:text-sm text-gray-700 leading-relaxed space-y-2 cursor-default">
-                        <p>Menampilkan tinjauan verifikasi PPLN status merah.</p>
-                    </div>
-                </div>
-            </details>
-
-        </div>
-
     </main>
 
     <script>
-        let state = {
-            dataLanding: null,
-            filterGlobal: { negara: 'Semua Negara', startDate: '', endDate: '' }
+    let state = {
+        dataLanding: null,
+        filterGlobal: { negara: 'Semua Negara', startDate: '', endDate: '' }
+    };
+
+    let chartTrenInstance = null;
+    
+    const bulanLabelsIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    let daftarNegaraTerjangkit = {};
+
+    function translateBulan(bulanStr) {
+        if (!bulanStr) return '';
+        const mapping = {
+            'January': 'Januari', 'February': 'Februari', 'March': 'Maret', 'April': 'April',
+            'May': 'Mei', 'June': 'Juni', 'July': 'Juli', 'August': 'Agustus',
+            'September': 'September', 'October': 'Oktober', 'November': 'November', 'December': 'Desember'
         };
+        return mapping[bulanStr] || bulanStr;
+    }
 
-        let activeGejala = null;
-        let activeDiagnosis = null;
-        let activeNegaraDetail = null; // Filter baru yang khusus untuk klik di Kotak "Negara" (bawah)
-        let activePeriode = "semua";
-        let chartTrenInstance = null;
-        
-        const bulanLabelsIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        const daftarNegaraTerjangkit = {
-            "Cambodia": "Flu Burung", "Angola": "Yellow Fever", "Argentina": "Yellow Fever",
-            "Benin": "Yellow Fever", "Bolivia": "Yellow Fever", "Brazil": "Yellow Fever",
-            "Burkina Faso": "Yellow Fever", "Burundi": "Yellow Fever", "Cameroon": "Yellow Fever",
-            "Central African Republic": "Yellow Fever", "Chad": "Yellow Fever", "Colombia": "Yellow Fever",
-            "Costa Rica": "Yellow Fever", "Cote d'Ivoire": "Yellow Fever", "Democratic Republic of the Congo": "Yellow Fever / Ebola",
-            "Ecuador": "Yellow Fever", "Equatorial Guinea": "Yellow Fever", "Ethiopia": "Yellow Fever",
-            "French Guiana": "Yellow Fever", "Gabon": "Yellow Fever", "Gambia": "Yellow Fever",
-            "Ghana": "Yellow Fever", "Guinea": "Yellow Fever", "Guinea-Bissau": "Yellow Fever",
-            "Guyana": "Yellow Fever", "Kenya": "Yellow Fever / Ebola", "Liberia": "Yellow Fever",
-            "Mali": "Yellow Fever", "Mauritania": "Yellow Fever", "Niger": "Yellow Fever",
-            "Nigeria": "Yellow Fever", "Panama": "Yellow Fever", "Paraguay": "Yellow Fever",
-            "Peru": "Yellow Fever", "Republic of the Congo": "Yellow Fever", "Senegal": "Yellow Fever",
-            "Sierra Leone": "Yellow Fever", "South Sudan": "Yellow Fever", "Sudan": "Yellow Fever",
-            "Suriname": "Yellow Fever", "Togo": "Yellow Fever", "Trinidad and Tobago": "Yellow Fever",
-            "Uganda": "Yellow Fever", "Venezuela": "Yellow Fever"
-        };
+    const elFilterNegaraGlobal = document.getElementById('filter-negara-global');
+    const elDateStartGlobal = document.getElementById('date-start-global');
+    const elDateEndGlobal = document.getElementById('date-end-global');
+    const elFilterNegaraTren = document.getElementById('filter-negara-tren');
+    const elFilterTahunTren = document.getElementById('filter-tahun-tren');
 
-        function translateBulan(bulanStr) {
-            if (!bulanStr) return '';
-            const mapping = {
-                'January': 'Januari', 'February': 'Februari', 'March': 'Maret', 'April': 'April',
-                'May': 'Mei', 'June': 'Juni', 'July': 'Juli', 'August': 'Agustus',
-                'September': 'September', 'October': 'Oktober', 'November': 'November', 'December': 'Desember'
-            };
-            return mapping[bulanStr] || bulanStr;
+    function toggleCalendarPopup() { document.getElementById('looker-calendar-popup').classList.toggle('active'); }
+
+    function handlePresetChange(type) {
+        if (!type) return;
+        const today = new Date();
+        let start = '', end = '', label = '';
+
+        if (type === 'semua') { label = 'Semua Waktu'; }
+        else if (type === 'hari_ini') { start = end = today.toISOString().split('T')[0]; label = 'Hari ini'; }
+        else if (type === 'kemarin') {
+            const yest = new Date(today); yest.setDate(today.getDate() - 1);
+            start = end = yest.toISOString().split('T')[0]; label = 'Kemarin';
+        } else if (type === 'bulan_ini') {
+            start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]; label = 'Bulan ini';
+        } else if (type === 'bulan_lalu') {
+            start = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+            end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0]; label = 'Bulan lalu';
+        } else if (type === 'triwulan_ini') {
+            const quarter = Math.floor(today.getMonth() / 3);
+            start = new Date(today.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
+            end = new Date(today.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0]; label = 'Triwulan ini';
+        } else if (type === '7_hari') {
+            const past = new Date(today); past.setDate(today.getDate() - 7);
+            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '7 hari terakhir';
+        } else if (type === '14_hari') {
+            const past = new Date(today); past.setDate(today.getDate() - 14);
+            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '14 hari terakhir';
+        } else if (type === '28_hari') {
+            const past = new Date(today); past.setDate(today.getDate() - 28);
+            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '28 hari terakhir';
+        } else if (type === '30_hari') {
+            const past = new Date(today); past.setDate(today.getDate() - 30);
+            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '30 hari terakhir';
+        } else if (type === 'minggu_lalu') {
+            const firstDay = new Date(today); firstDay.setDate(today.getDate() - today.getDay() - 7);
+            const lastDay = new Date(today); lastDay.setDate(today.getDate() - today.getDay() - 1);
+            start = firstDay.toISOString().split('T')[0]; end = lastDay.toISOString().split('T')[0]; label = 'Minggu lalu';
+        } else if (type === 'tahun_ini') {
+            start = `${today.getFullYear()}-01-01`; end = `${today.getFullYear()}-12-31`; label = `Tahun ini (${today.getFullYear()})`;
+        } else if (type === 'tahun_lalu') {
+            const prevYear = today.getFullYear() - 1;
+            start = `${prevYear}-01-01`; end = `${prevYear}-12-31`; label = `Tahun lalu (${prevYear})`;
         }
 
-        const elFilterNegaraGlobal = document.getElementById('filter-negara-global');
-        const elDateStartGlobal = document.getElementById('date-start-global');
-        const elDateEndGlobal = document.getElementById('date-end-global');
-        const elFilterNegaraTren = document.getElementById('filter-negara-tren');
-        const elFilterTahunTren = document.getElementById('filter-tahun-tren');
+        elDateStartGlobal.value = start;
+        elDateEndGlobal.value = end;
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${label}`;
+        toggleCalendarPopup();
+    }
 
-        function scrollToDashboard() { document.getElementById('detail-dashboard-section').scrollIntoView({ behavior: 'smooth' }); }
-        function toggleCalendarPopup() { document.getElementById('looker-calendar-popup').classList.toggle('active'); }
-
-        function handlePresetChange(type) {
-            if (!type) return;
-            const today = new Date();
-            let start = '', end = '', label = '';
-
-            if (type === 'semua') { label = 'Semua Waktu'; }
-            else if (type === 'hari_ini') { start = end = today.toISOString().split('T')[0]; label = 'Hari ini'; }
-            else if (type === 'kemarin') {
-                const yest = new Date(today); yest.setDate(today.getDate() - 1);
-                start = end = yest.toISOString().split('T')[0]; label = 'Kemarin';
-            } else if (type === 'bulan_ini') {
-                start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-                end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]; label = 'Bulan ini';
-            } else if (type === 'bulan_lalu') {
-                start = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-                end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0]; label = 'Bulan lalu';
-            } else if (type === 'triwulan_ini') {
-                const quarter = Math.floor(today.getMonth() / 3);
-                start = new Date(today.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
-                end = new Date(today.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0]; label = 'Triwulan ini';
-            } else if (type === '7_hari') {
-                const past = new Date(today); past.setDate(today.getDate() - 7);
-                start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '7 hari terakhir';
-            } else if (type === '14_hari') {
-                const past = new Date(today); past.setDate(today.getDate() - 14);
-                start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '14 hari terakhir';
-            } else if (type === '28_hari') {
-                const past = new Date(today); past.setDate(today.getDate() - 28);
-                start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '28 hari terakhir';
-            } else if (type === '30_hari') {
-                const past = new Date(today); past.setDate(today.getDate() - 30);
-                start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '30 hari terakhir';
-            } else if (type === 'minggu_lalu') {
-                const firstDay = new Date(today); firstDay.setDate(today.getDate() - today.getDay() - 7);
-                const lastDay = new Date(today); lastDay.setDate(today.getDate() - today.getDay() - 1);
-                start = firstDay.toISOString().split('T')[0]; end = lastDay.toISOString().split('T')[0]; label = 'Minggu lalu';
-            } else if (type === 'tahun_ini') {
-                start = `${today.getFullYear()}-01-01`; end = `${today.getFullYear()}-12-31`; label = `Tahun ini (${today.getFullYear()})`;
-            } else if (type === 'tahun_lalu') {
-                const prevYear = today.getFullYear() - 1;
-                start = `${prevYear}-01-01`; end = `${prevYear}-12-31`; label = `Tahun lalu (${prevYear})`;
-            }
-
-            elDateStartGlobal.value = start;
-            elDateEndGlobal.value = end;
-            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${label}`;
-            toggleCalendarPopup();
+    elDateStartGlobal.addEventListener('change', () => {
+        if(elDateStartGlobal.value && elDateEndGlobal.value) {
+            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
         }
-
-        elDateStartGlobal.addEventListener('change', () => {
-            if(elDateStartGlobal.value && elDateEndGlobal.value) {
-                document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
-            }
-        });
-        elDateEndGlobal.addEventListener('change', () => {
-            if(elDateStartGlobal.value && elDateEndGlobal.value) {
-                document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
-            }
-        });
-
-        async function initDashboard() {
-            elDateStartGlobal.value = '';
-            elDateEndGlobal.value = '';
-            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> Semua Waktu`;
-
-            showLoading(true, "Memuat Data Portal...", "Mengambil data rekapitulasi awal.");
-            try {
-                const response = await fetch('https://smartkarkes-dashboard.onrender.com/api/landing');
-                state.dataLanding = await response.json();
-
-                populateDropdownNegara(state.dataLanding.negara);
-                setWaktuDimuat();
-                applyFiltersToView();
-
-                renderRincianBulananRiil(state.dataLanding.rincian_bulanan);
-                initGrafikTrenRiil(state.dataLanding.negara);
-                showToast("Data berhasil dimuat!", "success");
-            } catch (error) {
-                showToast("Gagal memuat data dari server.", "error");
-            }
-            showLoading(false);
-            fetchDetailDashboardData();
+    });
+    elDateEndGlobal.addEventListener('change', () => {
+        if(elDateStartGlobal.value && elDateEndGlobal.value) {
+            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
         }
+    });
 
-        async function applyGlobalFilters() {
-            showLoading(true, "Menerapkan Filter...", "Menyesuaikan parameter data seluruh dashboard.");
-            const startDate = elDateStartGlobal.value;
-            const endDate = elDateEndGlobal.value;
-            state.filterGlobal.negara = elFilterNegaraGlobal.value;
-            state.filterGlobal.startDate = startDate;
-            state.filterGlobal.endDate = endDate;
-            
-            elFilterNegaraTren.value = state.filterGlobal.negara;
-            
-            let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
-            if (startDate && endDate) {
-                apiUrl.searchParams.append('start_date', startDate);
-                apiUrl.searchParams.append('end_date', endDate);
-            }
-            if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
-                apiUrl.searchParams.append('negara', state.filterGlobal.negara);
-            }
+    async function initDashboard() {
+        elDateStartGlobal.value = '';
+        elDateEndGlobal.value = '';
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> Semua Waktu`;
 
-            try {
-                const response = await fetch(apiUrl);
-                state.dataLanding = await response.json();
-                showToast("Filter global berhasil diterapkan!", "success");
-            } catch(e) {
-                showToast("Gagal menerapkan filter.", "error");
-            }
-            
-            applyFiltersToView();
+        showLoading(true, "Memuat Data Portal...", "Mengambil data rekapitulasi awal.");
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/landing');
+            state.dataLanding = await response.json();
+
+            populateDropdownNegara(state.dataLanding.negara);
+            setWaktuDimuat();
+            await applyFiltersToView();
+
             renderRincianBulananRiil(state.dataLanding.rincian_bulanan);
-            renderGrafikTrenRiil();
-            
-            // Apabila filter *global* diubah, pastikan kita mereset filter spesifik-kotak-negara agar tidak tabrakan
-            if (activeNegaraDetail && state.filterGlobal.negara !== "Semua Negara") {
-                activeNegaraDetail = null; 
-            }
-            fetchDetailDashboardData();
-            
-            showLoading(false);
+            initGrafikTrenRiil(state.dataLanding.negara);
+            showToast("Data berhasil dimuat!", "success");
+        } catch (error) {
+            showToast("Gagal memuat data dari server.", "error");
+        }
+        showLoading(false);
+    }
+
+    async function applyGlobalFilters() {
+        showLoading(true, "Menerapkan Filter...", "Menyesuaikan parameter data seluruh dashboard.");
+        const startDate = elDateStartGlobal.value;
+        const endDate = elDateEndGlobal.value;
+        state.filterGlobal.negara = elFilterNegaraGlobal.value;
+        state.filterGlobal.startDate = startDate;
+        state.filterGlobal.endDate = endDate;
+        
+        elFilterNegaraTren.value = state.filterGlobal.negara;
+        
+        let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
+        if (startDate && endDate) {
+            apiUrl.searchParams.append('start_date', startDate);
+            apiUrl.searchParams.append('end_date', endDate);
+        }
+        if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
+            apiUrl.searchParams.append('negara', state.filterGlobal.negara);
         }
 
-        function resetGlobalFilters() {
-            document.getElementById('looker-calendar-popup').classList.remove('active');
-            elFilterNegaraGlobal.value = 'Semua Negara';
-            document.getElementById('preset-dropdown').value = 'semua';
-            elDateStartGlobal.value = '';
-            elDateEndGlobal.value = '';
-            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> Semua Waktu`;
-
-            state.filterGlobal.negara = 'Semua Negara';
-            state.filterGlobal.startDate = '';
-            state.filterGlobal.endDate = '';
-
-            showToast("Filter direset. Klik 'Terapkan' untuk memperbarui data.", "success");
-        }                                                                
-
-        async function syncDataFromServer() {
-            showLoading(true, "Sinkronisasi Cloud...", "Sedang mendownload ulang data...");
-            try {
-                await fetch('https://smartkarkes-dashboard.onrender.com/api/sync');
-                await applyGlobalFilters();
-                showToast("Sinkronisasi data berhasil diperbarui!", "success");
-            } catch(e) {
-                showToast("Gagal sinkronisasi data dari server.", "error");
-            }
-            showLoading(false);
+        try {
+            const response = await fetch(apiUrl);
+            state.dataLanding = await response.json();
+            showToast("Filter global berhasil diterapkan!", "success");
+        } catch(e) {
+            showToast("Gagal menerapkan filter.", "error");
         }
         
-        function renderVerifikasi() {
-            if (!state.dataLanding || !state.dataLanding.verif) return;
-            
-            let minVerif = parseInt(document.getElementById('filter-min-verif').value) || 0;
-            let sortBy = document.getElementById('filter-urutkan-verif').value;
-            let dataVerif = [...state.dataLanding.verif];
+        await applyFiltersToView();
+        renderRincianBulananRiil(state.dataLanding.rincian_bulanan);
+        renderGrafikTrenRiil();
+        showLoading(false);
+    }
 
-            if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
-                dataVerif = dataVerif.filter(v => v.negara.toLowerCase() === state.filterGlobal.negara.toLowerCase());
-            }
+    function resetGlobalFilters() {
+        document.getElementById('looker-calendar-popup').classList.remove('active');
+        elFilterNegaraGlobal.value = 'Semua Negara';
+        document.getElementById('preset-dropdown').value = 'semua';
+        elDateStartGlobal.value = '';
+        elDateEndGlobal.value = '';
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-600"></i> Semua Waktu`;
 
-            dataVerif = dataVerif.filter(v => v.verif_merah >= minVerif);
-            dataVerif.sort((a, b) => {
-                if (sortBy === 'verif_desc') return b.verif_merah - a.verif_merah;
-                else if (sortBy === 'cakupan_asc') {
-                    if (a.cakupan_pct !== b.cakupan_pct) return a.cakupan_pct - b.cakupan_pct;
-                    return b.verif_merah - a.verif_merah;
-                } else if (sortBy === 'respon_desc') return b.tidak_respon - a.tidak_respon;
+        state.filterGlobal.negara = 'Semua Negara';
+        state.filterGlobal.startDate = '';
+        state.filterGlobal.endDate = '';
+
+        showToast("Filter direset. Klik 'Terapkan' untuk memperbarui data.", "success");
+    }                                                                       
+
+    async function syncDataFromServer() {
+        showLoading(true, "Sinkronisasi Cloud...", "Sedang mendownload ulang data...");
+        try {
+            await fetch('http://127.0.0.1:8000/api/sync');
+            await applyGlobalFilters();
+            showToast("Sinkronisasi data berhasil diperbarui!", "success");
+        } catch(e) {
+            showToast("Gagal sinkronisasi data dari server.", "error");
+        }
+        showLoading(false);
+    }
+    
+    function handleModePrioritasChange() {
+        const mode = document.getElementById('mode-prioritas-verif').value;
+        const elSort = document.getElementById('filter-urutkan-verif');
+
+        if (mode === 'kuning') {
+            elSort.value = 'kuning_desc';
+        } else if (mode === 'merah' || mode === 'endemik') {
+            elSort.value = 'verif_desc';
+        } else if (mode === 'cakupan') {
+            elSort.value = 'cakupan_asc';
+        }
+        renderVerifikasi();
+    }
+
+    function handleTableSortVerifChange() {
+        const sortBy = document.getElementById('filter-urutkan-verif').value;
+        const elMode = document.getElementById('mode-prioritas-verif');
+
+        if (sortBy === 'kuning_desc') {
+            elMode.value = 'kuning';
+        } else if (sortBy === 'cakupan_asc') {
+            elMode.value = 'cakupan';
+        } else if (sortBy === 'verif_desc' && elMode.value !== 'endemik') {
+            elMode.value = 'merah';
+        }
+        renderVerifikasi();
+    }
+
+    function renderVerifikasi() {
+        if (!state.dataLanding || !state.dataLanding.verif) return;
+        
+        let minVerif = parseInt(document.getElementById('filter-min-verif').value) || 0;
+        let sortBy = document.getElementById('filter-urutkan-verif').value;
+        let modePrioritas = document.getElementById('mode-prioritas-verif').value;
+        let dataNegaraGlobal = (state.dataLanding && state.dataLanding.negara) ? state.dataLanding.negara : [];
+
+        // Gabungkan data kuning & info penyakit ke setiap item verifikasi
+        let dataVerif = state.dataLanding.verif.map(v => {
+            const objGlobal = dataNegaraGlobal.find(n => n.negara.toLowerCase() === v.negara.toLowerCase());
+            const keyMatch = Object.keys(daftarNegaraTerjangkit).find(k => k.toLowerCase() === v.negara.toLowerCase());
+            return {
+                ...v,
+                kuning: objGlobal ? (objGlobal.kuning || 0) : 0,
+                penyakit: keyMatch ? daftarNegaraTerjangkit[keyMatch] : null
+            };
+        });
+
+        if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
+            dataVerif = dataVerif.filter(v => v.negara.toLowerCase() === state.filterGlobal.negara.toLowerCase());
+        }
+
+        dataVerif = dataVerif.filter(v => v.verif_merah >= minVerif);
+
+        // Pengurutan Tabel
+        dataVerif.sort((a, b) => {
+            if (sortBy === 'verif_desc') {
                 return b.verif_merah - a.verif_merah;
-            });
+            } else if (sortBy === 'kuning_desc') {
+                if (b.kuning !== a.kuning) return b.kuning - a.kuning;
+                return b.verif_merah - a.verif_merah;
+            } else if (sortBy === 'cakupan_asc') {
+                // Prioritaskan yang memiliki kasus merah (> 0) agar negara dengan 0 kasus tidak mendominasi atas
+                const aHasMerah = a.verif_merah > 0 ? 0 : 1;
+                const bHasMerah = b.verif_merah > 0 ? 0 : 1;
+                if (aHasMerah !== bHasMerah) return aHasMerah - bHasMerah;
+                if (a.cakupan_pct !== b.cakupan_pct) return a.cakupan_pct - b.cakupan_pct;
+                return b.verif_merah - a.verif_merah;
+            } else if (sortBy === 'respon_desc') {
+                return b.tidak_respon - a.tidak_respon;
+            }
+            return b.verif_merah - a.verif_merah;
+        });
 
-            if (dataVerif.length > 0) {
-                let dataTerjangkit = [];
-                dataVerif.forEach(v => {
-                    const keyMatch = Object.keys(daftarNegaraTerjangkit).find(k => k.toLowerCase() === v.negara.toLowerCase());
-                    if (keyMatch) dataTerjangkit.push({ ...v, penyakit: daftarNegaraTerjangkit[keyMatch] });
-                });
+        if (dataVerif.length > 0) {
+            let prioritas = null;
+            let badgePrioritas = '';
+            let alasanPrioritas = '';
 
-                let isTerjangkit = dataTerjangkit.length > 0;
-                let prioritas = isTerjangkit 
-                    ? dataTerjangkit.sort((a, b) => b.verif_merah - a.verif_merah)[0]
+            if (modePrioritas === 'kuning') {
+                prioritas = [...dataVerif].sort((a, b) => (b.kuning - a.kuning) || (b.verif_merah - a.verif_merah))[0];
+                badgePrioritas = prioritas.penyakit ? ` - ${prioritas.penyakit} (Kuning Terbanyak)` : ' (Status Kuning Terbanyak)';
+                alasanPrioritas = `berdasarkan kriteria <strong>Status Kuning (Daerah Terjangkit) tertinggi</strong> sebanyak <strong>${prioritas.kuning.toLocaleString('id-ID')}</strong> orang, disertai`;
+            } else if (modePrioritas === 'merah') {
+                prioritas = [...dataVerif].sort((a, b) => b.verif_merah - a.verif_merah)[0];
+                badgePrioritas = ' (Status Merah Terbanyak)';
+                alasanPrioritas = `berdasarkan kriteria <strong>Status Merah (Bergejala) tertinggi</strong> dengan temuan`;
+            } else if (modePrioritas === 'cakupan') {
+                const kandidatCakupan = dataVerif.filter(v => v.verif_merah > 0);
+                const pool = kandidatCakupan.length > 0 ? kandidatCakupan : dataVerif;
+                prioritas = [...pool].sort((a, b) => (a.cakupan_pct - b.cakupan_pct) || (b.verif_merah - a.verif_merah))[0];
+                badgePrioritas = ` (Cakupan Terendah: ${prioritas.cakupan_pct.toFixed(2)}%)`;
+                alasanPrioritas = `berdasarkan kriteria <strong>Cakupan Verifikasi terendah (${prioritas.cakupan_pct.toFixed(2)}%)</strong> dengan temuan`;
+            } else {
+                // Default: mode === 'endemik'
+                const dataTerjangkit = dataVerif.filter(v => v.penyakit !== null);
+                const isTerjangkit = dataTerjangkit.length > 0;
+                prioritas = isTerjangkit
+                    ? [...dataTerjangkit].sort((a, b) => b.verif_merah - a.verif_merah)[0]
                     : [...dataVerif].sort((a, b) => b.verif_merah - a.verif_merah)[0];
 
-                let maxRespon = [...dataVerif].sort((a, b) => b.tidak_respon - a.tidak_respon)[0];
-                let maxVerif = dataVerif[0];
-
                 let labelPenyakit = prioritas.penyakit ? ` - ${prioritas.penyakit}` : '';
-                let badgeTerjangkit = isTerjangkit ? ' (Daerah Terjangkit)' : '';
-
-                document.getElementById('card-prioritas-negara').textContent = `${prioritas.negara}${labelPenyakit}${badgeTerjangkit}`;
-                document.getElementById('card-prioritas-val').textContent = `Merah: ${prioritas.verif_merah} | Tak Respon: ${prioritas.tidak_respon}`;
-                document.getElementById('card-respon-negara').textContent = maxRespon.negara;
-                document.getElementById('card-respon-val').textContent = `${maxRespon.tidak_respon} tidak respons`;
-                document.getElementById('card-verif-negara').textContent = maxVerif.negara;
-                document.getElementById('card-verif-val').textContent = `${maxVerif.verif_merah.toLocaleString('id-ID')} VERIF Merah`;
-
-                let alasanPrioritas = isTerjangkit 
-                    ? `karena merupakan <strong>Daerah Terjangkit (${prioritas.penyakit})</strong> dengan temuan` 
+                badgePrioritas = isTerjangkit ? `${labelPenyakit} (Daerah Terjangkit)` : ' (Kasus Merah Terbanyak)';
+                alasanPrioritas = isTerjangkit
+                    ? `karena merupakan <strong>Daerah Terjangkit (${prioritas.penyakit})</strong> dengan temuan`
                     : `yang mencatatkan angka pengawasan signifikan, yaitu`;
-
-                let aiTextVerif = `
-                    <div class="space-y-2 text-[13px] text-gray-700 text-justify">
-                        <p>Berdasarkan hasil verifikasi kedatangan, negara <strong>${maxVerif.negara}</strong> mencatatkan volume kasus verifikasi merah tertinggi sebanyak <strong>${maxVerif.verif_merah.toLocaleString('id-ID')}</strong> orang. Dari data tersebut, rincian diagnosis terbanyak menunjukkan indikasi <strong>${maxVerif.diagnosis || 'tidak diketahui'}</strong>.</p>
-                        
-                        <p><strong>Negara Prioritas Pengawasan:</strong> Perhatian utama dialokasikan pada kedatangan dari <strong>${prioritas.negara}</strong> ${alasanPrioritas} <strong>${prioritas.verif_merah}</strong> kasus berstatus merah dan <strong>${prioritas.tidak_respon}</strong> penumpang yang belum memberikan respons. Adapun temuan diagnosis utama dari rute ini adalah <strong>${prioritas.diagnosis || '-'}</strong>.</p>
-                        
-                        <p><strong>Rekomendasi Tindak Lanjut:</strong> Lakukan pelacakan kontak (contact tracing) dan verifikasi lapangan secara ketat, khususnya terhadap kelompok penumpang yang tidak merespons panggilan petugas serta pengawasan pada gejala penyakit dominan yang tercatat. <em>*Sesuaikan dengan kondisi lapangan.</em></p>
-                    </div>
-                `;
-                document.getElementById('ai-text-verif').innerHTML = aiTextVerif;
-            } else {
-                document.getElementById('card-prioritas-negara').textContent = "-";
-                document.getElementById('card-prioritas-val').textContent = "0";
-                document.getElementById('card-respon-negara').textContent = "-";
-                document.getElementById('card-respon-val').textContent = "0 tidak respons";
-                document.getElementById('card-verif-negara').textContent = "-";
-                document.getElementById('card-verif-val').textContent = "0 VERIF Merah";
-                document.getElementById('ai-text-verif').innerHTML = "<p>Tidak ada data verifikasi yang memenuhi kriteria filter.</p>";
             }
 
-            const tbody = document.getElementById('tbody-verifikasi');
-            if (!tbody) return;
+            let maxRespon = [...dataVerif].sort((a, b) => b.tidak_respon - a.tidak_respon)[0];
+            let maxVerif = [...dataVerif].sort((a, b) => b.verif_merah - a.verif_merah)[0];
 
-            if (dataVerif.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="py-3 text-center text-red-500 font-medium">Tidak ada data verifikasi.</td></tr>';
-                return;
-            }
+            // Update Tampilan Card dengan indikator lengkap (Merah, Kuning, Cakupan, Tak Respon)
+            document.getElementById('card-prioritas-negara').textContent = `${prioritas.negara}${badgePrioritas}`;
+            document.getElementById('card-prioritas-val').innerHTML = `
+                Merah: <strong class="text-red-600">${prioritas.verif_merah.toLocaleString('id-ID')}</strong> | 
+                Kuning: <strong class="text-amber-600">${prioritas.kuning.toLocaleString('id-ID')}</strong> | 
+                Cakupan: <strong class="text-teal-700">${prioritas.cakupan_pct.toFixed(2)}%</strong> | 
+                Tak Respon: <strong>${prioritas.tidak_respon.toLocaleString('id-ID')}</strong>
+            `;
+            document.getElementById('card-respon-negara').textContent = maxRespon.negara;
+            document.getElementById('card-respon-val').textContent = `${maxRespon.tidak_respon.toLocaleString('id-ID')} tidak respons`;
+            document.getElementById('card-verif-negara').textContent = maxVerif.negara;
+            document.getElementById('card-verif-val').textContent = `${maxVerif.verif_merah.toLocaleString('id-ID')} VERIF Merah`;
 
-            let htmlRows = '';
-            dataVerif.forEach((item, index) => {
-                htmlRows += `
-                <tr class="hover:bg-teal-50/30 transition-colors">
-                    <td class="py-2 px-3 text-center text-gray-400 font-bold">${index + 1}</td>
-                    <td class="py-2 px-3 font-semibold text-gray-800">${item.negara}</td>
-                    <td class="py-2 px-3 text-right font-medium text-gray-700">${typeof item.total_riwayat === 'number' ? item.total_riwayat.toLocaleString('id-ID') : item.total_riwayat}</td>
-                    <td class="py-2 px-3 text-right font-bold text-red-600">${item.verif_merah.toLocaleString('id-ID')}</td>
-                    <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.terverifikasi.toLocaleString('id-ID')}</td>
-                    <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.tidak_respon.toLocaleString('id-ID')}</td>
-                    <td class="py-2 px-3 text-right text-gray-600">${item.tidak_dilakukan.toLocaleString('id-ID')}</td>
-                    <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.cakupan_pct.toFixed(2)}%</td>
-                    <td class="py-2 px-3 text-[11px] text-gray-600">${item.diagnosis}</td>
-                </tr>`;
-            });
-            tbody.innerHTML = htmlRows;
-        }
-
-        function applyFiltersToView() {
-            if(!state.dataLanding) return;
-
-            let sd = state.filterGlobal.startDate;
-            let ed = state.filterGlobal.endDate;
-            let teksPeriode = (sd && ed) ? `${formatDateID(sd)} - ${formatDateID(ed)}` : "Semua Waktu";
-            
-            document.getElementById('text-periode-global').textContent = teksPeriode;
-            document.getElementById('badge-periode-rasio').textContent = teksPeriode;
-            document.getElementById('badge-periode-verif').textContent = teksPeriode;
-            document.getElementById('badge-negara-rasio').textContent = state.filterGlobal.negara;
-            document.getElementById('badge-negara-verif').textContent = state.filterGlobal.negara;
-            
-            document.getElementById('badge-negara-tren').textContent = state.filterGlobal.negara;
-            document.getElementById('badge-negara-per100k').textContent = state.filterGlobal.negara;
-            document.getElementById('badge-negara-detail').textContent = state.filterGlobal.negara;
-
-            document.getElementById('info-rentang-global').innerHTML = `Rentang: <strong>${teksPeriode}</strong>`;
-
-            updateScorecardUtama(state.filterGlobal.negara);
-            renderTabelRasio();
-            renderVerifikasi();
-            renderAI();
-        }
-
-        function updateScorecardUtama(pilihanNegara) {
-            let t = 0, h = 0, k = 0, m = 0;
-            if (pilihanNegara === 'Semua Negara') {
-                t = state.dataLanding.total_ppln; h = state.dataLanding.hijau; k = state.dataLanding.kuning; m = state.dataLanding.merah;
-            } else {
-                const target = state.dataLanding.negara.find(n => n.negara.toLowerCase() === pilihanNegara.toLowerCase());
-                if(target) { t = target.total; h = target.hijau; k = target.kuning; m = target.merah; }
-            }
-
-            document.getElementById('val-total').textContent = t.toLocaleString('id-ID');
-            document.getElementById('val-hijau').textContent = h.toLocaleString('id-ID');
-            document.getElementById('val-kuning').textContent = k.toLocaleString('id-ID');
-            document.getElementById('val-merah').textContent = m.toLocaleString('id-ID');
-            document.getElementById('pct-hijau').textContent = t > 0 ? ((h/t)*100).toFixed(2) + '%' : '0%';
-            document.getElementById('pct-kuning').textContent = t > 0 ? ((k/t)*100).toFixed(2) + '%' : '0%';
-            document.getElementById('pct-merah').textContent = t > 0 ? ((m/t)*100).toFixed(2) + '%' : '0%';
-        }
-
-        function renderTabelRasio() {
-            let minRiwayat = parseInt(document.getElementById('filter-min-riwayat').value) || 0;
-            let sortBy = document.getElementById('filter-urutkan').value;
-            
-            if (!state.dataLanding || !state.dataLanding.negara) return;
-            let dataNegara = [...state.dataLanding.negara]; 
-
-            if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
-                dataNegara = dataNegara.filter(n => n.negara.toLowerCase() === state.filterGlobal.negara.toLowerCase());
-            }
-
-            let filteredData = [];
-            dataNegara.forEach(n => {
-                if(n.total >= minRiwayat) {
-                    let rasioVal = n.total > 0 ? (n.merah / n.total) * 100 : 0;
-                    filteredData.push({ ...n, rasio_pct: rasioVal });
-                }
-            });
-
-            if (sortBy === 'rasio_desc') filteredData.sort((a, b) => b.rasio_pct - a.rasio_pct);
-            else if (sortBy === 'merah_desc') filteredData.sort((a, b) => b.merah - a.merah);
-            else if (sortBy === 'total_desc') filteredData.sort((a, b) => b.total - a.total);
-
-            const tbody = document.getElementById('tbody-rasio-negara');
-            if (filteredData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-red-500 font-medium">Tidak ada data yang memenuhi syarat.</td></tr>';
-                return;
-            }
-
-            let htmlRows = '';
-            filteredData.forEach((item, index) => {
-                htmlRows += `
-                <tr class="hover:bg-teal-50/30 transition-colors">
-                    <td class="py-2 px-3 text-center text-gray-400 font-bold">${index + 1}</td>
-                    <td class="py-2 px-3 font-semibold text-gray-800">${item.negara}</td>
-                    <td class="py-2 px-3 text-right font-medium text-gray-700">${item.total.toLocaleString('id-ID')}</td>
-                    <td class="py-2 px-3 text-right"><span class="${item.merah > 0 ? 'bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-md' : 'text-gray-400 font-medium'}">${item.merah.toLocaleString('id-ID')}</span></td>
-                    <td class="py-2 px-3 text-right font-bold ${item.rasio_pct > 0 ? 'text-gray-700' : 'text-gray-400'}">${item.rasio_pct.toFixed(2)}%</td>
-                </tr>`;
-            });
-            tbody.innerHTML = htmlRows;
-
-            let totalMerahFilter = filteredData.reduce((sum, item) => sum + item.merah, 0);
-            let totalRiwayatFilter = filteredData.reduce((sum, item) => sum + item.total, 0);
-            let avgRasioFilter = totalRiwayatFilter > 0 ? ((totalMerahFilter / totalRiwayatFilter) * 100).toFixed(2) : '0.00';
-            let topNegaraRasio = filteredData.length > 0 ? filteredData[0].negara : '-';
-            let topRasioVal = filteredData.length > 0 ? filteredData[0].rasio_pct.toFixed(2) : '0.00';
-
-            let aiTextRasio = `
+            let aiTextVerif = `
                 <div class="space-y-2 text-[13px] text-gray-700 text-justify">
-                    <p>Dari total <strong>${totalRiwayatFilter.toLocaleString('id-ID')}</strong> riwayat perjalanan yang terfilter, tercatat sebanyak <strong>${totalMerahFilter.toLocaleString('id-ID')}</strong> kedatangan penumpang berstatus merah. Secara keseluruhan, rasio temuan kasus berada pada angka <strong>${avgRasioFilter}%</strong>.</p>
-                    <p>Negara asal <strong>${topNegaraRasio}</strong> menyumbang persentase rasio kasus bergejala paling tinggi, yaitu sebesar <strong>${topRasioVal}%</strong>. Angka ini merupakan rujukan penting untuk menetapkan prioritas sasaran pengawasan pada saat kedatangan.</p>
+                    <p>Berdasarkan hasil verifikasi kedatangan, negara <strong>${maxVerif.negara}</strong> mencatatkan volume kasus verifikasi merah tertinggi sebanyak <strong>${maxVerif.verif_merah.toLocaleString('id-ID')}</strong> orang. Dari data tersebut, rincian diagnosis terbanyak menunjukkan indikasi <strong>${maxVerif.diagnosis || 'tidak diketahui'}</strong>.</p>
+                    
+                    <p><strong>Negara Prioritas Pengawasan:</strong> Perhatian utama dialokasikan pada kedatangan dari <strong>${prioritas.negara}</strong> ${alasanPrioritas} <strong>${prioritas.verif_merah.toLocaleString('id-ID')}</strong> kasus berstatus merah, <strong>${prioritas.kuning.toLocaleString('id-ID')}</strong> status kuning, tingkat cakupan verifikasi <strong>${prioritas.cakupan_pct.toFixed(2)}%</strong>, dan <strong>${prioritas.tidak_respon.toLocaleString('id-ID')}</strong> penumpang yang belum memberikan respons. Adapun temuan diagnosis utama dari rute ini adalah <strong>${prioritas.diagnosis || '-'}</strong>.</p>
+                    
+                    <p><strong>Rekomendasi Tindak Lanjut:</strong> Lakukan pelacakan kontak (contact tracing) dan verifikasi lapangan secara ketat, khususnya terhadap kelompok penumpang yang tidak merespons panggilan petugas serta pengawasan pada gejala penyakit dominan yang tercatat. <em>*Sesuaikan dengan kondisi lapangan.</em></p>
                 </div>
             `;
-            document.getElementById('ai-text-rasio').innerHTML = aiTextRasio;
+            document.getElementById('ai-text-verif').innerHTML = aiTextVerif;
+        } else {
+            document.getElementById('card-prioritas-negara').textContent = "-";
+            document.getElementById('card-prioritas-val').textContent = "0";
+            document.getElementById('card-respon-negara').textContent = "-";
+            document.getElementById('card-respon-val').textContent = "0 tidak respons";
+            document.getElementById('card-verif-negara').textContent = "-";
+            document.getElementById('card-verif-val').textContent = "0 VERIF Merah";
+            document.getElementById('ai-text-verif').innerHTML = "<p>Tidak ada data verifikasi yang memenuhi kriteria filter.</p>";
         }
 
-        function renderAI() {
-            let total = document.getElementById('val-total').innerText;
-            let hijau = document.getElementById('val-hijau').innerText;
-            let kuning = document.getElementById('val-kuning').innerText;
-            let merah = document.getElementById('val-merah').innerText;
-            
-            let sd = state.filterGlobal.startDate;
-            let ed = state.filterGlobal.endDate;
-            let negara = state.filterGlobal.negara;
-            
-            let teksPeriode = (sd && ed) ? `${formatDateID(sd)} sampai ${formatDateID(ed)}` : "keseluruhan waktu";
-            let teksNegara = (negara && negara !== "Semua Negara") ? `dari negara <strong>${negara}</strong> ` : "";
+        const tbody = document.getElementById('tbody-verifikasi');
+        if (!tbody) return;
 
-            let fullAiText = `
-                <div class="space-y-2 text-gray-700 text-[13px] leading-relaxed text-justify">
-                    <p>Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN) ${teksNegara}pada periode <strong>${teksPeriode}</strong>, tercatat akumulasi sebanyak <strong>${total}</strong> total kedatangan di Bandara Internasional I Gusti Ngurah Rai.</p>
-                    <p>Mayoritas penumpang berada pada status Hijau / Tidak Berisiko sebanyak <strong>${hijau}</strong> orang. Namun, terdapat indikasi <strong>${merah}</strong> penumpang berstatus Merah (Berisiko) yang memerlukan verifikasi lanjutan, serta <strong>${kuning}</strong> penumpang dengan riwayat Daerah Terjangkit (Kuning).</p>
-                </div>
-            `;
-            document.getElementById('ai-text').innerHTML = fullAiText;
+        if (dataVerif.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="py-3 text-center text-red-500 font-medium">Tidak ada data verifikasi.</td></tr>';
+            return;
         }
 
-        function populateDropdownNegara(daftarNegara) {
-            const currentSelected = elFilterNegaraGlobal.value;
-            const currentSelectedTren = elFilterNegaraTren.value;
-            
-            elFilterNegaraGlobal.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
-            elFilterNegaraTren.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
-            
-            if(daftarNegara) {
-                let names = [...new Set(daftarNegara.map(n => n.negara))].sort();
-                names.forEach(n => {
-                    if(n && n !== 'nan' && n !== '-') {
-                        let opt1 = document.createElement('option'); opt1.value = n; opt1.textContent = n;
-                        elFilterNegaraGlobal.appendChild(opt1);
-                        let opt2 = document.createElement('option'); opt2.value = n; opt2.textContent = n;
-                        elFilterNegaraTren.appendChild(opt2);
-                    }
-                });
+        let htmlRows = '';
+        dataVerif.forEach((item, index) => {
+            htmlRows += `
+            <tr class="hover:bg-teal-50/30 transition-colors">
+                <td class="py-2 px-3 text-center text-gray-400 font-bold">${index + 1}</td>
+                <td class="py-2 px-3 font-semibold text-gray-800">${item.negara}</td>
+                <td class="py-2 px-3 text-right font-medium text-gray-700">${typeof item.total_riwayat === 'number' ? item.total_riwayat.toLocaleString('id-ID') : item.total_riwayat}</td>
+                <td class="py-2 px-3 text-right font-bold ${item.kuning > 0 ? 'text-amber-600' : 'text-gray-400'}">${item.kuning.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right font-bold text-red-600">${item.verif_merah.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.terverifikasi.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.tidak_respon.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right text-gray-600">${item.tidak_dilakukan.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right font-semibold text-gray-700">${item.cakupan_pct.toFixed(2)}%</td>
+                <td class="py-2 px-3 text-[11px] text-gray-600">${item.diagnosis}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = htmlRows;
+    }
+
+    async function syncTerjangkitData(forceFetch = false) {
+        if (!forceFetch && state.dataLanding && state.dataLanding.terjangkit_map) {
+            daftarNegaraTerjangkit = state.dataLanding.terjangkit_map;
+            if (state.dataLanding.terjangkit_periode) {
+                const [y, m] = state.dataLanding.terjangkit_periode.split('-');
+                const bln = bulanLabelsIndo[parseInt(m, 10) - 1] || m;
+                const elBadgeAcuan = document.getElementById('badge-acuan-terjangkit');
+                if (elBadgeAcuan) elBadgeAcuan.textContent = `${bln} ${y}`;
             }
-            elFilterNegaraGlobal.value = currentSelected;
-            elFilterNegaraTren.value = currentSelectedTren;
+            return;
         }
 
-        function renderRincianBulananRiil(dataRincian) {
-            const tbodyPer100k = document.getElementById('tbody-per100k');
-            if (!tbodyPer100k) return;
+        try {
+            const targetDate = state.filterGlobal.endDate || state.filterGlobal.startDate;
+            const ym = targetDate ? targetDate.slice(0, 7) : '';
+            const url = new URL('http://127.0.0.1:8000/api/terjangkit');
+            if (ym) url.searchParams.append('periode', ym);
 
-            let sourceData = (state.dataLanding && state.dataLanding.rincian_bulanan) ? state.dataLanding.rincian_bulanan : [];
-
-            if (sourceData.length === 0) {
-                tbodyPer100k.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-gray-400">Tidak ada data.</td></tr>';
-                return;
-            }
-
-            let totalRiwayatGlobal = sourceData.reduce((sum, item) => sum + item.total_riwayat, 0);
-            let totalBergejalaGlobal = sourceData.reduce((sum, item) => sum + item.bergejala, 0);
-            let rateKumulatif = totalRiwayatGlobal > 0 ? ((totalBergejalaGlobal / totalRiwayatGlobal) * 100000).toFixed(2) : '0,00';
-
-            let sortedByRate = [...sourceData].sort((a, b) => b.per_100k - a.per_100k);
-            let maxObj = sortedByRate[0];
-            let minObj = sortedByRate[sortedByRate.length - 1];
-
-            let sortedByKasus = [...sourceData].sort((a, b) => b.bergejala - a.bergejala);
-            let maxObjKasus = sortedByKasus[0];
-
-            document.getElementById('card-rate-tinggi').textContent = maxObj.per_100k.toFixed(2).replace('.', ',');
-            document.getElementById('card-rate-avg').textContent = rateKumulatif.replace('.', ',');
-            document.getElementById('card-rate-volume').textContent = totalRiwayatGlobal.toLocaleString('id-ID');
-            document.getElementById('card-rate-tinggi-bulan').textContent = `${translateBulan(maxObj.bulan)} ${maxObj.tahun}`;
-            document.getElementById('card-rate-volume-bulan').textContent = `${sourceData.length} bulan data`;
-
-            document.getElementById('ringkasan-kasus-max').textContent = `${maxObjKasus.bergejala.toLocaleString('id-ID')} kasus`;
-            document.getElementById('ringkasan-kasus-max-bln').textContent = `${translateBulan(maxObjKasus.bulan)} ${maxObjKasus.tahun}`;
-            document.getElementById('ringkasan-rate-min').textContent = minObj.per_100k.toFixed(2).replace('.', ',');
-            document.getElementById('ringkasan-rate-min-bln').textContent = `${translateBulan(minObj.bulan)} ${minObj.tahun}`;
-
-            if (sourceData.length >= 2) {
-                let last = sourceData[sourceData.length - 1];
-                let prev = sourceData[sourceData.length - 2];
-                let diff = last.per_100k - prev.per_100k;
-                let pct = prev.per_100k > 0 ? (diff / prev.per_100k) * 100 : 0;
-                
-                let elTren = document.getElementById('ringkasan-tren-akhir');
-                let iconTren = document.getElementById('icon-tren-akhir');
-                if (diff >= 0) {
-                    elTren.textContent = `+${pct.toFixed(2).replace('.', ',')}%`;
-                    elTren.className = "text-xl font-black text-red-600 leading-none mt-1";
-                    iconTren.className = "fa-solid fa-arrow-trend-up text-red-500";
-                    iconTren.parentElement.className = "w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg";
-                } else {
-                    elTren.textContent = `${pct.toFixed(2).replace('.', ',')}%`;
-                    elTren.className = "text-xl font-black text-blue-600 leading-none mt-1";
-                    iconTren.className = "fa-solid fa-arrow-trend-down text-blue-500";
-                    iconTren.parentElement.className = "w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg";
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data && data.countries_map) {
+                daftarNegaraTerjangkit = data.countries_map;
+                if (data.selected_periode) {
+                    const [y, m] = data.selected_periode.split('-');
+                    const bln = bulanLabelsIndo[parseInt(m, 10) - 1] || m;
+                    const elBadgeAcuan = document.getElementById('badge-acuan-terjangkit');
+                    if (elBadgeAcuan) elBadgeAcuan.textContent = `${bln} ${y}`;
                 }
-                document.getElementById('ringkasan-tren-akhir-bln').textContent = `dari ${translateBulan(prev.bulan)} ke ${translateBulan(last.bulan)} ${last.tahun}`;
             }
+        } catch (e) {
+            console.error("Gagal memuat acuan negara terjangkit:", e);
+        }
+    }
 
-            let htmlRows = '';
-            sourceData.forEach((item) => {
-                let namaBulanIndo = translateBulan(item.bulan);
-                htmlRows += `
-                <tr class="hover:bg-teal-50/30 transition-colors">
-                    <td class="py-3 px-4 font-medium text-gray-600">${item.tahun}</td>
-                    <td class="py-3 px-4 font-semibold text-gray-800">${namaBulanIndo}</td>
-                    <td class="py-3 px-4 text-right font-medium">${item.total_riwayat.toLocaleString('id-ID')}</td>
-                    <td class="py-3 px-4 text-right text-red-600 font-bold">${item.bergejala.toLocaleString('id-ID')}</td>
-                    <td class="py-3 px-4 text-right font-bold text-gray-800">${item.per_100k.toFixed(2).replace('.', ',')}</td>
-                    <td class="py-3 px-4 text-right text-gray-500">${item.persen.toFixed(2).replace('.', ',')}%</td>
-                </tr>`;
-            });
-            tbodyPer100k.innerHTML = htmlRows;
-            
-            let teksNegara = (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") ? `dari negara <strong>${state.filterGlobal.negara}</strong> ` : "";
+    async function applyFiltersToView() {
+        if(!state.dataLanding) return;
 
-            let aiPer100kText = `
-                <p>Rata-rata global kasus bergejala di Bandara Internasional I Gusti Ngurah Rai ${teksNegara}berada pada angka <strong>${rateKumulatif.replace('.', ',')}</strong> per 100.000 riwayat kedatangan.</p>
-                <p>Proporsi insidensi terbanyak ditemukan pada bulan <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong>, mencapai <strong>${maxObj.per_100k.toFixed(2).replace('.', ',')}</strong> kasus per 100.000 riwayat perjalanan.</p>
-            `;
-            document.getElementById('ai-text-per100k').innerHTML = aiPer100kText;
+        let sd = state.filterGlobal.startDate;
+        let ed = state.filterGlobal.endDate;
+        let teksPeriode = (sd && ed) ? `${formatDateID(sd)} - ${formatDateID(ed)}` : "Semua Waktu";
+        
+        document.getElementById('text-periode-global').textContent = teksPeriode;
+        document.getElementById('badge-periode-rasio').textContent = teksPeriode;
+        document.getElementById('badge-periode-verif').textContent = teksPeriode;
+        document.getElementById('badge-negara-rasio').textContent = state.filterGlobal.negara;
+        document.getElementById('badge-negara-verif').textContent = state.filterGlobal.negara;
+        
+        document.getElementById('badge-negara-tren').textContent = state.filterGlobal.negara;
+        document.getElementById('badge-negara-per100k').textContent = state.filterGlobal.negara;
 
-            let aiRincianText = `
-                <p>Selama periode pengamatan, tercatat total <strong>${totalRiwayatGlobal.toLocaleString('id-ID')}</strong> riwayat perjalanan masuk ${teksNegara}(dengan format tanggal valid), di mana <strong>${totalBergejalaGlobal.toLocaleString('id-ID')}</strong> orang di antaranya menunjukkan indikasi bergejala.</p>
-                <p>Bulan dengan <i>rate</i> kasus bergejala tertinggi (berdasarkan proporsi total riwayat) jatuh pada <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong> (${maxObj.per_100k.toFixed(2).replace('.', ',')} per 100.000). Sementara itu, <i>rate</i> paling rendah terjadi pada bulan <strong>${translateBulan(minObj.bulan)} ${minObj.tahun}</strong> dengan rasio ${minObj.per_100k.toFixed(2).replace('.', ',')} per 100.000.</p>
-            `;
-            document.getElementById('ai-text-rincian').innerHTML = aiRincianText;
+        document.getElementById('info-rentang-global').innerHTML = `Rentang: <strong>${teksPeriode}</strong>`;
+
+        await syncTerjangkitData(false);
+
+        updateScorecardUtama(state.filterGlobal.negara);
+        renderTabelRasio();
+        renderVerifikasi();
+        renderAI();
+    }
+
+    function updateScorecardUtama(pilihanNegara) {
+        let t = 0, h = 0, k = 0, m = 0;
+        if (pilihanNegara === 'Semua Negara') {
+            t = state.dataLanding.total_ppln; h = state.dataLanding.hijau; k = state.dataLanding.kuning; m = state.dataLanding.merah;
+        } else {
+            const target = state.dataLanding.negara.find(n => n.negara.toLowerCase() === pilihanNegara.toLowerCase());
+            if(target) { t = target.total; h = target.hijau; k = target.kuning; m = target.merah; }
         }
 
-        function initGrafikTrenRiil(dataNegara) {
-            const ctx = document.getElementById('chartTrenBergejala').getContext('2d');
-            
-            const rawTren2026 = (state.dataLanding && state.dataLanding.tren_2026) ? state.dataLanding.tren_2026 : new Array(12).fill(0);
-            const rawTren2025 = (state.dataLanding && state.dataLanding.tren_2025) ? state.dataLanding.tren_2025 : [null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0];
+        document.getElementById('val-total').textContent = t.toLocaleString('id-ID');
+        document.getElementById('val-hijau').textContent = h.toLocaleString('id-ID');
+        document.getElementById('val-kuning').textContent = k.toLocaleString('id-ID');
+        document.getElementById('val-merah').textContent = m.toLocaleString('id-ID');
+        document.getElementById('pct-hijau').textContent = t > 0 ? ((h/t)*100).toFixed(2) + '%' : '0%';
+        document.getElementById('pct-kuning').textContent = t > 0 ? ((k/t)*100).toFixed(2) + '%' : '0%';
+        document.getElementById('pct-merah').textContent = t > 0 ? ((m/t)*100).toFixed(2) + '%' : '0%';
+    }
 
-            chartTrenInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: bulanLabelsIndo,
-                    datasets: [
-                        {
-                            label: 'Tahun 2026 (Jan - Des)',
-                            data: rawTren2026,
-                            borderColor: '#374151',
-                            backgroundColor: '#374151',
-                            borderWidth: 2.5,
-                            tension: 0.3,
-                            pointRadius: 3,
-                            spanGaps: true
-                        },
-                        {
-                            label: 'Tahun 2025 (Jun - Des)',
-                            data: rawTren2025,
-                            borderColor: '#9ca3af',
-                            backgroundColor: '#9ca3af',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 2.5,
-                            borderDash: [5, 5],
-                            spanGaps: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let val = context.raw;
-                                    if (val === null || val === undefined) return '';
-                                    return `${context.dataset.label}: ${val.toLocaleString('id-ID')} kasus`;
-                                }
+    function renderTabelRasio() {
+        let minRiwayat = parseInt(document.getElementById('filter-min-riwayat').value) || 0;
+        let sortBy = document.getElementById('filter-urutkan').value;
+        
+        if (!state.dataLanding || !state.dataLanding.negara) return;
+        let dataNegara = [...state.dataLanding.negara]; 
+
+        if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
+            dataNegara = dataNegara.filter(n => n.negara.toLowerCase() === state.filterGlobal.negara.toLowerCase());
+        }
+
+        let filteredData = [];
+        dataNegara.forEach(n => {
+            if(n.total >= minRiwayat) {
+                let rasioVal = n.total > 0 ? (n.merah / n.total) * 100 : 0;
+                filteredData.push({ ...n, rasio_pct: rasioVal });
+            }
+        });
+
+        if (sortBy === 'rasio_desc') filteredData.sort((a, b) => b.rasio_pct - a.rasio_pct);
+        else if (sortBy === 'merah_desc') filteredData.sort((a, b) => b.merah - a.merah);
+        else if (sortBy === 'total_desc') filteredData.sort((a, b) => b.total - a.total);
+
+        const tbody = document.getElementById('tbody-rasio-negara');
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-red-500 font-medium">Tidak ada data yang memenuhi syarat.</td></tr>';
+            return;
+        }
+
+        let htmlRows = '';
+        filteredData.forEach((item, index) => {
+            htmlRows += `
+            <tr class="hover:bg-teal-50/30 transition-colors">
+                <td class="py-2 px-3 text-center text-gray-400 font-bold">${index + 1}</td>
+                <td class="py-2 px-3 font-semibold text-gray-800">${item.negara}</td>
+                <td class="py-2 px-3 text-right font-medium text-gray-700">${item.total.toLocaleString('id-ID')}</td>
+                <td class="py-2 px-3 text-right"><span class="${item.merah > 0 ? 'bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-md' : 'text-gray-400 font-medium'}">${item.merah.toLocaleString('id-ID')}</span></td>
+                <td class="py-2 px-3 text-right font-bold ${item.rasio_pct > 0 ? 'text-gray-700' : 'text-gray-400'}">${item.rasio_pct.toFixed(2)}%</td>
+            </tr>`;
+        });
+        tbody.innerHTML = htmlRows;
+
+        let totalMerahFilter = filteredData.reduce((sum, item) => sum + item.merah, 0);
+        let totalRiwayatFilter = filteredData.reduce((sum, item) => sum + item.total, 0);
+        let avgRasioFilter = totalRiwayatFilter > 0 ? ((totalMerahFilter / totalRiwayatFilter) * 100).toFixed(2) : '0.00';
+        let topNegaraRasio = filteredData.length > 0 ? filteredData[0].negara : '-';
+        let topRasioVal = filteredData.length > 0 ? filteredData[0].rasio_pct.toFixed(2) : '0.00';
+
+        let aiTextRasio = `
+            <div class="space-y-2 text-[13px] text-gray-700 text-justify">
+                <p>Dari total <strong>${totalRiwayatFilter.toLocaleString('id-ID')}</strong> riwayat perjalanan yang terfilter, tercatat sebanyak <strong>${totalMerahFilter.toLocaleString('id-ID')}</strong> kedatangan penumpang berstatus merah. Secara keseluruhan, rasio temuan kasus berada pada angka <strong>${avgRasioFilter}%</strong>.</p>
+                <p>Negara asal <strong>${topNegaraRasio}</strong> menyumbang persentase rasio kasus bergejala paling tinggi, yaitu sebesar <strong>${topRasioVal}%</strong>. Angka ini merupakan rujukan penting untuk menetapkan prioritas sasaran pengawasan pada saat kedatangan.</p>
+            </div>
+        `;
+        document.getElementById('ai-text-rasio').innerHTML = aiTextRasio;
+    }
+
+    function renderAI() {
+        let total = document.getElementById('val-total').innerText;
+        let hijau = document.getElementById('val-hijau').innerText;
+        let kuning = document.getElementById('val-kuning').innerText;
+        let merah = document.getElementById('val-merah').innerText;
+        
+        let sd = state.filterGlobal.startDate;
+        let ed = state.filterGlobal.endDate;
+        let negara = state.filterGlobal.negara;
+        
+        let teksPeriode = (sd && ed) ? `${formatDateID(sd)} sampai ${formatDateID(ed)}` : "keseluruhan waktu";
+        let teksNegara = (negara && negara !== "Semua Negara") ? `dari negara <strong>${negara}</strong> ` : "";
+
+        let fullAiText = `
+            <div class="space-y-2 text-gray-700 text-[13px] leading-relaxed text-justify">
+                <p>Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN) ${teksNegara}pada periode <strong>${teksPeriode}</strong>, tercatat akumulasi sebanyak <strong>${total}</strong> total kedatangan di Bandara Internasional I Gusti Ngurah Rai.</p>
+                <p>Mayoritas penumpang berada pada status Hijau / Tidak Berisiko sebanyak <strong>${hijau}</strong> orang. Namun, terdapat indikasi <strong>${merah}</strong> penumpang berstatus Merah (Berisiko) yang memerlukan verifikasi lanjutan, serta <strong>${kuning}</strong> penumpang dengan riwayat Daerah Terjangkit (Kuning).</p>
+            </div>
+        `;
+        document.getElementById('ai-text').innerHTML = fullAiText;
+    }
+
+    function populateDropdownNegara(daftarNegara) {
+        const currentSelected = elFilterNegaraGlobal.value;
+        const currentSelectedTren = elFilterNegaraTren.value;
+        
+        elFilterNegaraGlobal.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
+        elFilterNegaraTren.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
+        
+        if(daftarNegara) {
+            let names = [...new Set(daftarNegara.map(n => n.negara))].sort();
+            names.forEach(n => {
+                if(n && n !== 'nan' && n !== '-') {
+                    let opt1 = document.createElement('option'); opt1.value = n; opt1.textContent = n;
+                    elFilterNegaraGlobal.appendChild(opt1);
+                    let opt2 = document.createElement('option'); opt2.value = n; opt2.textContent = n;
+                    elFilterNegaraTren.appendChild(opt2);
+                }
+            });
+        }
+        elFilterNegaraGlobal.value = currentSelected;
+        elFilterNegaraTren.value = currentSelectedTren;
+    }
+
+    function renderRincianBulananRiil(dataRincian) {
+        const tbodyPer100k = document.getElementById('tbody-per100k');
+        if (!tbodyPer100k) return;
+
+        let sourceData = (state.dataLanding && state.dataLanding.rincian_bulanan) ? state.dataLanding.rincian_bulanan : [];
+
+        if (sourceData.length === 0) {
+            tbodyPer100k.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-gray-400">Tidak ada data.</td></tr>';
+            return;
+        }
+
+        let totalRiwayatGlobal = sourceData.reduce((sum, item) => sum + item.total_riwayat, 0);
+        let totalBergejalaGlobal = sourceData.reduce((sum, item) => sum + item.bergejala, 0);
+        let rateKumulatif = totalRiwayatGlobal > 0 ? ((totalBergejalaGlobal / totalRiwayatGlobal) * 100000).toFixed(2) : '0,00';
+
+        let sortedByRate = [...sourceData].sort((a, b) => b.per_100k - a.per_100k);
+        let maxObj = sortedByRate[0];
+        let minObj = sortedByRate[sortedByRate.length - 1];
+
+        let sortedByKasus = [...sourceData].sort((a, b) => b.bergejala - a.bergejala);
+        let maxObjKasus = sortedByKasus[0];
+
+        document.getElementById('card-rate-tinggi').textContent = maxObj.per_100k.toFixed(2).replace('.', ',');
+        document.getElementById('card-rate-avg').textContent = rateKumulatif.replace('.', ',');
+        document.getElementById('card-rate-volume').textContent = totalRiwayatGlobal.toLocaleString('id-ID');
+        document.getElementById('card-rate-tinggi-bulan').textContent = `${translateBulan(maxObj.bulan)} ${maxObj.tahun}`;
+        document.getElementById('card-rate-volume-bulan').textContent = `${sourceData.length} bulan data`;
+
+        document.getElementById('ringkasan-kasus-max').textContent = `${maxObjKasus.bergejala.toLocaleString('id-ID')} kasus`;
+        document.getElementById('ringkasan-kasus-max-bln').textContent = `${translateBulan(maxObjKasus.bulan)} ${maxObjKasus.tahun}`;
+        document.getElementById('ringkasan-rate-min').textContent = minObj.per_100k.toFixed(2).replace('.', ',');
+        document.getElementById('ringkasan-rate-min-bln').textContent = `${translateBulan(minObj.bulan)} ${minObj.tahun}`;
+
+        if (sourceData.length >= 2) {
+            let last = sourceData[sourceData.length - 1];
+            let prev = sourceData[sourceData.length - 2];
+            let diff = last.per_100k - prev.per_100k;
+            let pct = prev.per_100k > 0 ? (diff / prev.per_100k) * 100 : 0;
+            
+            let elTren = document.getElementById('ringkasan-tren-akhir');
+            let iconTren = document.getElementById('icon-tren-akhir');
+            if (diff >= 0) {
+                elTren.textContent = `+${pct.toFixed(2).replace('.', ',')}%`;
+                elTren.className = "text-xl font-black text-red-600 leading-none mt-1";
+                iconTren.className = "fa-solid fa-arrow-trend-up text-red-500";
+                iconTren.parentElement.className = "w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-lg";
+            } else {
+                elTren.textContent = `${pct.toFixed(2).replace('.', ',')}%`;
+                elTren.className = "text-xl font-black text-blue-600 leading-none mt-1";
+                iconTren.className = "fa-solid fa-arrow-trend-down text-blue-500";
+                iconTren.parentElement.className = "w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-lg";
+            }
+            document.getElementById('ringkasan-tren-akhir-bln').textContent = `dari ${translateBulan(prev.bulan)} ke ${translateBulan(last.bulan)} ${last.tahun}`;
+        }
+
+        let htmlRows = '';
+        sourceData.forEach((item) => {
+            let namaBulanIndo = translateBulan(item.bulan);
+            htmlRows += `
+            <tr class="hover:bg-teal-50/30 transition-colors">
+                <td class="py-3 px-4 font-medium text-gray-600">${item.tahun}</td>
+                <td class="py-3 px-4 font-semibold text-gray-800">${namaBulanIndo}</td>
+                <td class="py-3 px-4 text-right font-medium">${item.total_riwayat.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right text-red-600 font-bold">${item.bergejala.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right font-bold text-gray-800">${item.per_100k.toFixed(2).replace('.', ',')}</td>
+                <td class="py-3 px-4 text-right text-gray-500">${item.persen.toFixed(2).replace('.', ',')}%</td>
+            </tr>`;
+        });
+        tbodyPer100k.innerHTML = htmlRows;
+        
+        let teksNegara = (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") ? `dari negara <strong>${state.filterGlobal.negara}</strong> ` : "";
+
+        let aiPer100kText = `
+            <p>Rata-rata global kasus bergejala di Bandara Internasional I Gusti Ngurah Rai ${teksNegara}berada pada angka <strong>${rateKumulatif.replace('.', ',')}</strong> per 100.000 riwayat kedatangan.</p>
+            <p>Proporsi insidensi terbanyak ditemukan pada bulan <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong>, mencapai <strong>${maxObj.per_100k.toFixed(2).replace('.', ',')}</strong> kasus per 100.000 riwayat perjalanan.</p>
+        `;
+        document.getElementById('ai-text-per100k').innerHTML = aiPer100kText;
+
+        let aiRincianText = `
+            <p>Selama periode pengamatan, tercatat total <strong>${totalRiwayatGlobal.toLocaleString('id-ID')}</strong> riwayat perjalanan masuk ${teksNegara}(dengan format tanggal valid), di mana <strong>${totalBergejalaGlobal.toLocaleString('id-ID')}</strong> orang di antaranya menunjukkan indikasi bergejala.</p>
+            <p>Bulan dengan <i>rate</i> kasus bergejala tertinggi (berdasarkan proporsi total riwayat) jatuh pada <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong> (${maxObj.per_100k.toFixed(2).replace('.', ',')} per 100.000). Sementara itu, <i>rate</i> paling rendah terjadi pada bulan <strong>${translateBulan(minObj.bulan)} ${minObj.tahun}</strong> dengan rasio ${minObj.per_100k.toFixed(2).replace('.', ',')} per 100.000.</p>
+        `;
+        document.getElementById('ai-text-rincian').innerHTML = aiRincianText;
+    }
+
+    function initGrafikTrenRiil(dataNegara) {
+        const ctx = document.getElementById('chartTrenBergejala').getContext('2d');
+        
+        const rawTren2026 = (state.dataLanding && state.dataLanding.tren_2026) ? state.dataLanding.tren_2026 : new Array(12).fill(0);
+        const rawTren2025 = (state.dataLanding && state.dataLanding.tren_2025) ? state.dataLanding.tren_2025 : [null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0];
+
+        chartTrenInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: bulanLabelsIndo,
+                datasets: [
+                    {
+                        label: 'Tahun 2026 (Jan - Des)',
+                        data: rawTren2026,
+                        borderColor: '#374151',
+                        backgroundColor: '#374151',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        pointRadius: 3,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Tahun 2025 (Jun - Des)',
+                        data: rawTren2025,
+                        borderColor: '#9ca3af',
+                        backgroundColor: '#9ca3af',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 2.5,
+                        borderDash: [5, 5],
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw;
+                                if (val === null || val === undefined) return '';
+                                return `${context.dataset.label}: ${val.toLocaleString('id-ID')} kasus`;
                             }
                         }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f3f4f6' }, title: { display: true, text: 'Total Kasus Merah', font: { size: 10 } } },
-                        x: { grid: { display: false }, title: { display: true, text: 'Bulan Kedatangan', font: { size: 10 } } }
                     }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' }, title: { display: true, text: 'Total Kasus Merah', font: { size: 10 } } },
+                    x: { grid: { display: false }, title: { display: true, text: 'Bulan Kedatangan', font: { size: 10 } } }
                 }
-            });
-
-            updateAITrenText('Semua Negara', 'Semua Tahun', rawTren2026, rawTren2025);
-        }
-
-        async function renderGrafikTrenRiil() {
-            const negara = elFilterNegaraTren.value;
-            const tahun = elFilterTahunTren.value;
-            
-            showLoading(true, "Memperbarui Grafik Tren...", "Mengambil data tren bulanan.");
-            try {
-                let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
-                if (negara && negara !== "Semua Negara") apiUrl.searchParams.append('negara', negara);
-                
-                const response = await fetch(apiUrl);
-                const result = await response.json();
-                
-                let rawTren2026 = result.tren_2026 || new Array(12).fill(0);
-                let rawTren2025 = result.tren_2025 || [null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0];
-                
-                document.getElementById('badge-negara-tren').textContent = negara;
-
-                if (chartTrenInstance) {
-                    chartTrenInstance.data.datasets[0].data = rawTren2026;
-                    chartTrenInstance.data.datasets[1].data = rawTren2025;
-                    if (tahun === '2026') { chartTrenInstance.data.datasets[0].hidden = false; chartTrenInstance.data.datasets[1].hidden = true; } 
-                    else if (tahun === '2025') { chartTrenInstance.data.datasets[0].hidden = true; chartTrenInstance.data.datasets[1].hidden = false; } 
-                    else { chartTrenInstance.data.datasets[0].hidden = false; chartTrenInstance.data.datasets[1].hidden = false; }
-                    chartTrenInstance.update();
-                }
-
-                updateAITrenText(negara, tahun, rawTren2026, rawTren2025);
-                showToast("Grafik tren berhasil diperbarui!", "success");
-            } catch (e) {
-                showToast("Gagal memperbarui grafik tren.", "error");
             }
-            showLoading(false);
-        }
+        });
 
-        function resetTrenRiil() { elFilterNegaraTren.value = 'Semua Negara'; elFilterTahunTren.value = 'Semua Tahun'; renderGrafikTrenRiil(); }
+        updateAITrenText('Semua Negara', 'Semua Tahun', rawTren2026, rawTren2025);
+    }
 
-        function updateAITrenText(negara, tahun, data2026, data2025) {
-            let subjekNegara = (negara && negara !== "Semua Negara") ? `dari negara <strong>${negara}</strong>` : "secara global";
-            let konteksTahun = (tahun && tahun !== "Semua Tahun") ? `tahun <strong>${tahun}</strong>` : "tahun 2025 dan 2026";
-
-            let maxVal2026 = -1, maxBulan2026 = '';
-            if (data2026 && data2026.length > 0) {
-                data2026.forEach((val, idx) => { if (val !== null && val > maxVal2026) { maxVal2026 = val; maxBulan2026 = bulanLabelsIndo[idx]; } });
-            }
-            let maxVal2025 = -1, maxBulan2025 = '';
-            if (data2025 && data2025.length > 0) {
-                data2025.forEach((val, idx) => { if (val !== null && val > maxVal2025) { maxVal2025 = val; maxBulan2025 = bulanLabelsIndo[idx]; } });
-            }
-
-            let infoPuncak = (tahun === '2026') ? `Kasus bergejala tertinggi pada tahun 2026 tercatat di bulan <strong>${maxBulan2026}</strong> dengan jumlah <strong>${maxVal2026.toLocaleString('id-ID')}</strong> kasus.` :
-                             (tahun === '2025') ? `Aktivitas kasus tertinggi di tahun 2025 tercatat pada bulan <strong>${maxBulan2025}</strong> dengan jumlah <strong>${maxVal2025.toLocaleString('id-ID')}</strong> kasus.` :
-                             `Berdasarkan data multi-tahun, puncak insidensi pada 2026 tercatat di bulan <strong>${maxBulan2026}</strong> (${maxVal2026} kasus), sementara pada tahun 2025 puncaknya berada di bulan <strong>${maxBulan2025}</strong> (${maxVal2025} kasus).`;
-
-            let htmlText = `
-                <div class="space-y-2 text-[13px] text-gray-700 text-justify">
-                    <p>Pemantauan tren kedatangan PPLN di Bandara Internasional I Gusti Ngurah Rai ${subjekNegara} pada ${konteksTahun} menunjukkan adanya fluktuasi jumlah penumpang bergejala setiap bulannya.</p>
-                    <p>${infoPuncak}</p>
-                </div>
-            `;
-            document.getElementById('ai-text-tren').innerHTML = htmlText;
-        }
-
-        function setWaktuDimuat() {
-            const now = new Date();
-            const formatStr = now.toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second:'2-digit' }).replace(/\./g, ':');
-            document.getElementById('info-dimuat-global').innerHTML = `Dimuat: <strong>${formatStr}</strong>`;
-        }
-
-        function formatDateID(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return d.toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'});
-        }
-
-        function showLoading(show, title = "Memproses Data...", desc = "Mohon tunggu sebentar.") {
-            const overlay = document.getElementById('global-loading-overlay');
-            document.getElementById('loading-title').textContent = title;
-            document.getElementById('loading-desc').textContent = desc;
-            if (show) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } 
-            else { overlay.classList.remove('flex'); overlay.classList.add('hidden'); }
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast-notification');
-            const content = document.getElementById('toast-content');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-message');
-
-            msg.textContent = message;
-            content.className = "flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ";
-            if (type === 'success') {
-                content.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
-                icon.className = "fa-solid fa-circle-check text-emerald-600 text-lg";
-            } else {
-                content.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
-                icon.className = "fa-solid fa-circle-exclamation text-red-600 text-lg";
-            }
-
-            toast.classList.remove('translate-y-20', 'opacity-0'); toast.classList.add('translate-y-0', 'opacity-100');
-            setTimeout(() => { toast.classList.remove('translate-y-0', 'opacity-100'); toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
-        }
-
-        const loadingState = document.getElementById('analysis-loading');
-        const mainText = document.getElementById('analysis-text-main');
-        const filtersContainer = document.getElementById('active-filters-container');
-        const pillNegara = document.getElementById('pill-negara');
-        const textPillNegara = document.getElementById('text-pill-negara');
-        const pillGejala = document.getElementById('pill-gejala');
-        const textPillGejala = document.getElementById('text-pill-gejala');
-        const pillDiag = document.getElementById('pill-diag');
-        const textPillDiag = document.getElementById('text-pill-diag');
+    async function renderGrafikTrenRiil() {
+        const negara = elFilterNegaraTren.value;
+        const tahun = elFilterTahunTren.value;
         
-        const titleNegaraAktif = document.getElementById('title-negara-aktif');
-        const titleGejalaAktif = document.getElementById('title-gejala-aktif');
-        const titleDiagAktif = document.getElementById('title-diag-aktif');
-
-        function changePeriodeDetail() { activePeriode = document.getElementById('periode-select-detail').value; fetchDetailDashboardData(); }
-
-        function formatAnalysisText(periode, data, topNegaraVerif) {
-            // Ambil filter aktif dari elemen HTML dropdown
-            let activeFilterNegara = document.getElementById('filter-negara-global').value;
-            let activeFilterRentang = document.getElementById('looker-date-label').innerText.replace(' Semua Waktu', 'keseluruhan waktu').replace('Hari ini', 'hari ini').trim();
+        showLoading(true, "Memperbarui Grafik Tren...", "Mengambil data tren bulanan.");
+        try {
+            let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
+            if (negara && negara !== "Semua Negara") apiUrl.searchParams.append('negara', negara);
             
-            // Konteks Narasi berdasarkan filter
-            let periodText = activeFilterRentang;
-            let n_txt = (activeFilterNegara && activeFilterNegara !== "Semua Negara") ? `dari negara <strong>${activeFilterNegara}</strong>` : "secara global";
+            const response = await fetch(apiUrl);
+            const result = await response.json();
+            
+            let rawTren2026 = result.tren_2026 || new Array(12).fill(0);
+            let rawTren2025 = result.tren_2025 || [null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0];
+            
+            document.getElementById('badge-negara-tren').textContent = negara;
 
-            let baseIntro = `Berdasarkan pemantauan data ${n_txt} untuk periode <strong>${periodText}</strong>, tercatat akumulasi sebanyak <strong>${data.total_merah.toLocaleString('id-ID')} kasus PPLN</strong> pada <strong>${data.tanggal_terakhir}</strong>. `;
-            
-            // Ambil Top Gejala dan Top Diagnosis dari object 'data'
-            let topGejalaName = data.top_gejala && data.top_gejala.length > 0 ? data.top_gejala[0].val : 'tidak ada data';
-            let topGejalaCount = data.top_gejala && data.top_gejala.length > 0 ? data.top_gejala[0].count.toLocaleString('id-ID') : '0';
-            
-            let topDiagName = data.top_diagnosis && data.top_diagnosis.length > 0 ? data.top_diagnosis[0].val : 'tidak ada data';
-            let topDiagCount = data.top_diagnosis && data.top_diagnosis.length > 0 ? data.top_diagnosis[0].count.toLocaleString('id-ID') : '0';
-
-            let diagnosisNote = `Analisis gejala menunjukkan keluhan terbanyak adalah <strong>${topGejalaName} (${topGejalaCount} kasus)</strong>, dengan mayoritas diagnosis mengarah pada indikasi <strong>${topDiagName} (${topDiagCount} kasus)</strong>. `;
-            
-            // Ambil Top Negara (Khusus jika filter = Semua Negara)
-            let extraContext = '';
-            if (activeFilterNegara === "Semua Negara" && data.top_negara && data.top_negara.length > 0) {
-                 let topNegaraList = data.top_negara[0];
-                 extraContext = `<p class="mt-2">Sebagai contoh kasus tertinggi, dari total kedatangan asal <strong>${topNegaraList.negara}</strong>, terdapat <strong>${topNegaraList.verif_merah.toLocaleString('id-ID')}</strong> penumpang berstatus verifikasi merah.</p>`;
+            if (chartTrenInstance) {
+                chartTrenInstance.data.datasets[0].data = rawTren2026;
+                chartTrenInstance.data.datasets[1].data = rawTren2025;
+                if (tahun === '2026') { chartTrenInstance.data.datasets[0].hidden = false; chartTrenInstance.data.datasets[1].hidden = true; } 
+                else if (tahun === '2025') { chartTrenInstance.data.datasets[0].hidden = true; chartTrenInstance.data.datasets[1].hidden = false; } 
+                else { chartTrenInstance.data.datasets[0].hidden = false; chartTrenInstance.data.datasets[1].hidden = false; }
+                chartTrenInstance.update();
             }
 
-            return `
-                <div class="space-y-2 text-[13px] text-gray-700 text-justify">
-                    <p>${baseIntro}${diagnosisNote}</p>
-                    ${extraContext}
-                    <div class="mt-3 p-3 bg-white border border-teal-200 rounded-lg shadow-sm">
-                        <p class="font-bold text-teal-800 text-[12px]"><i class="fa-solid fa-clipboard-check mr-1 text-teal-600"></i> Rekomendasi Tindak Lanjut:</p>
-                        <p class="text-[12px] mt-1">Lakukan pengetatan pengawasan melalui pemeriksaan suhu tubuh dan saturasi oksigen pada kelompok penumpang dengan indikasi gejala <strong>${topGejalaName}</strong>. <em>*Sesuaikan dengan kondisi lapangan.</em></p>
-                    </div>
-                </div>
-            `;
+            updateAITrenText(negara, tahun, rawTren2026, rawTren2025);
+            showToast("Grafik tren berhasil diperbarui!", "success");
+        } catch (e) {
+            showToast("Gagal memperbarui grafik tren.", "error");
+        }
+        showLoading(false);
+    }
+
+    function resetTrenRiil() { elFilterNegaraTren.value = 'Semua Negara'; elFilterTahunTren.value = 'Semua Tahun'; renderGrafikTrenRiil(); }
+
+    function updateAITrenText(negara, tahun, data2026, data2025) {
+        let subjekNegara = (negara && negara !== "Semua Negara") ? `dari negara <strong>${negara}</strong>` : "secara global";
+        let konteksTahun = (tahun && tahun !== "Semua Tahun") ? `tahun <strong>${tahun}</strong>` : "tahun 2025 dan 2026";
+
+        let maxVal2026 = -1, maxBulan2026 = '';
+        if (data2026 && data2026.length > 0) {
+            data2026.forEach((val, idx) => { if (val !== null && val > maxVal2026) { maxVal2026 = val; maxBulan2026 = bulanLabelsIndo[idx]; } });
+        }
+        let maxVal2025 = -1, maxBulan2025 = '';
+        if (data2025 && data2025.length > 0) {
+            data2025.forEach((val, idx) => { if (val !== null && val > maxVal2025) { maxVal2025 = val; maxBulan2025 = bulanLabelsIndo[idx]; } });
         }
 
-        async function fetchDetailDashboardData() {
-            if (loadingState) loadingState.classList.remove('hidden');
-            updateFilterPills();
+        let infoPuncak = (tahun === '2026') ? `Kasus bergejala tertinggi pada tahun 2026 tercatat di bulan <strong>${maxBulan2026}</strong> dengan jumlah <strong>${maxVal2026.toLocaleString('id-ID')}</strong> kasus.` :
+                         (tahun === '2025') ? `Aktivitas kasus tertinggi di tahun 2025 tercatat pada bulan <strong>${maxBulan2025}</strong> dengan jumlah <strong>${maxVal2025.toLocaleString('id-ID')}</strong> kasus.` :
+                         `Berdasarkan data multi-tahun, puncak insidensi pada 2026 tercatat di bulan <strong>${maxBulan2026}</strong> (${maxVal2026} kasus), sementara pada tahun 2025 puncaknya berada di bulan <strong>${maxBulan2025}</strong> (${maxVal2025} kasus).`;
 
-            try {
-                // Saat negara diklik, frontend akan mengirim 'activeNegaraDetail'. 
-                // Jika tidak diklik, dia akan mengandalkan filter global state.filterGlobal.negara
-                const payload = { 
-                    gejala: activeGejala || "", 
-                    diagnosis: activeDiagnosis || "", 
-                    periode: activePeriode || "semua",
-                    negara: activeNegaraDetail || state.filterGlobal.negara || "Semua Negara" 
-                };
+        let htmlText = `
+            <div class="space-y-2 text-[13px] text-gray-700 text-justify">
+                <p>Pemantauan tren kedatangan PPLN di Bandara Internasional I Gusti Ngurah Rai ${subjekNegara} pada ${konteksTahun} menunjukkan adanya fluktuasi jumlah penumpang bergejala setiap bulannya.</p>
+                <p>${infoPuncak}</p>
+            </div>
+        `;
+        document.getElementById('ai-text-tren').innerHTML = htmlText;
+    }
 
-                const response = await fetch('https://smartkarkes-dashboard.onrender.com/api/stats', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+    function setWaktuDimuat() {
+        const now = new Date();
+        const formatStr = now.toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second:'2-digit' }).replace(/\./g, ':');
+        document.getElementById('info-dimuat-global').innerHTML = `Dimuat: <strong>${formatStr}</strong>`;
+    }
 
-                const data = await response.json();
-                if(data.error) throw new Error(data.error);
-                
-                document.getElementById('score-sshp').textContent = data.total_merah.toLocaleString('id-ID');
-                document.getElementById('score-verif-detail').textContent = data.terverifikasi.toLocaleString('id-ID');
-                document.getElementById('score-not-resp').textContent = data.tidak_respon.toLocaleString('id-ID');
-                document.getElementById('score-unverif').textContent = data.tidak_divalidasi.toLocaleString('id-ID');
-                document.getElementById('score-cakupan-detail').textContent = data.cakupan_pct + '%';
-                document.getElementById('score-date').textContent = data.tanggal_terakhir;
+    function formatDateID(dateStr) {
+        if(!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'});
+    }
 
-                // Mempersiapkan data untuk Narasi AI Teks
-                let topNegaraData = null;
-                if (state.dataLanding && state.dataLanding.verif) {
-                    let staticData = [...state.dataLanding.verif];
-                    if (activeNegaraDetail) {
-                        topNegaraData = staticData.find(n => n.negara === activeNegaraDetail);
-                    } else if (data.top_negara && data.top_negara.length > 0) {
-                        let topName = data.top_negara[0].negara || data.top_negara[0].val || data.top_negara[0].name;
-                        topNegaraData = staticData.find(n => n.negara === topName);
-                    } else if (staticData.length > 0) {
-                        staticData.sort((a,b) => b.verif_merah - a.verif_merah);
-                        topNegaraData = staticData[0];
-                    }
-                }
+    function showLoading(show, title = "Memproses Data...", desc = "Mohon tunggu sebentar.") {
+        const overlay = document.getElementById('global-loading-overlay');
+        document.getElementById('loading-title').textContent = title;
+        document.getElementById('loading-desc').textContent = desc;
+        if (show) { overlay.classList.remove('hidden'); overlay.classList.add('flex'); } 
+        else { overlay.classList.remove('flex'); overlay.classList.add('hidden'); }
+    }
 
-                // KOTAK 1: NEGARA ASAL (SEKARANG DINAMIS!)
-                const negaraContainer = document.getElementById('list-negara-detail');
-                if (negaraContainer) {
-                    let negHtml = '';
-                    
-                    // Prioritas 1: Jika backend sudah diupdate dan berhasil mereturn data.top_negara
-                    if (data.top_negara && data.top_negara.length > 0) {
-                        data.top_negara.slice(0, 10).forEach((item, index) => {
-                            // Mendeteksi format key dari backend (berjaga-jaga jika berbeda penamaan)
-                            let countryName = item.negara || item.val || item.name;
-                            let countryCount = item.verif_merah !== undefined ? item.verif_merah : item.count;
-                            
-                            const isSelected = activeNegaraDetail === countryName;
-                            negHtml += `
-                            <li class="flex justify-between items-center py-2 px-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-gray-100 border-gray-400 shadow-sm' : 'border-transparent'}" onclick="selectNegaraDetail('${countryName}')">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-gray-400 font-bold text-xs w-4 text-center">${index + 1}</span>
-                                    <span class="font-semibold text-gray-700 text-xs">${countryName}</span>
-                                </div>
-                                <span class="${isSelected ? 'text-gray-800 bg-gray-200 border-gray-300' : 'text-red-600 bg-red-50 border-red-100'} font-bold text-xs px-2 py-0.5 rounded border">${(countryCount || 0).toLocaleString('id-ID')}</span>
-                            </li>`;
-                        });
-                    } 
-                    // Prioritas 2 (Fallback): Jika backend belum/gagal mereturn, render versi statis seperti sebelumnya
-                    else if (state.dataLanding && state.dataLanding.verif) {
-                        let dataNeg = [...state.dataLanding.verif];
-                        dataNeg.sort((a,b) => b.verif_merah - a.verif_merah);
-                        dataNeg.slice(0, 10).forEach((item, index) => {
-                            const isSelected = activeNegaraDetail === item.negara;
-                            negHtml += `
-                            <li class="flex justify-between items-center py-2 px-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-gray-100 border-gray-400 shadow-sm' : 'border-transparent'}" onclick="selectNegaraDetail('${item.negara}')">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-gray-400 font-bold text-xs w-4 text-center">${index + 1}</span>
-                                    <span class="font-semibold text-gray-700 text-xs">${item.negara}</span>
-                                </div>
-                                <span class="${isSelected ? 'text-gray-800 bg-gray-200 border-gray-300' : 'text-red-600 bg-red-50 border-red-100'} font-bold text-xs px-2 py-0.5 rounded border">${item.verif_merah.toLocaleString('id-ID')}</span>
-                            </li>`;
-                        });
-                    }
-                    
-                    negaraContainer.innerHTML = negHtml || '<li class="p-3 text-center text-gray-400 text-xs">Tidak ada data</li>';
-                }
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast-notification');
+        const content = document.getElementById('toast-content');
+        const icon = document.getElementById('toast-icon');
+        const msg = document.getElementById('toast-message');
 
-                // KOTAK 2: GEJALA
-                const gejalaContainer = document.getElementById('list-gejala');
-                if (gejalaContainer && data.top_gejala) {
-                    let gejalaHtml = '';
-                    data.top_gejala.forEach((item, index) => {
-                        const isSelected = activeGejala === item.val;
-                        gejalaHtml += `
-                        <li class="flex justify-between items-center py-2 px-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-gray-100 border-gray-400 shadow-sm' : 'border-transparent'}" onclick="selectGejala('${item.val}')">
-                            <div class="flex items-center gap-2">
-                                <span class="text-gray-400 font-bold text-xs w-4 text-center">${index + 1}</span>
-                                <span class="font-semibold text-gray-700 text-xs">${item.val}</span>
-                            </div>
-                            <span class="text-gray-800 font-bold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200">${item.count.toLocaleString('id-ID')}</span>
-                        </li>`;
-                    });
-                    gejalaContainer.innerHTML = gejalaHtml || '<li class="p-3 text-center text-gray-400 text-xs">Tidak ada data</li>';
-                }
-
-                // KOTAK 3: DIAGNOSIS
-                const diagContainer = document.getElementById('list-diagnosis');
-                if (diagContainer && data.top_diagnosis) {
-                    let diagHtml = '';
-                    data.top_diagnosis.forEach((item, index) => {
-                        const isSelected = activeDiagnosis === item.val;
-                        diagHtml += `
-                        <li class="flex justify-between items-center py-2 px-2.5 hover:bg-gray-50 rounded-lg cursor-pointer transition-all border ${isSelected ? 'bg-gray-100 border-gray-400 shadow-sm' : 'border-transparent'}" onclick="selectDiagnosis('${item.val}')">
-                            <div class="flex items-center gap-2">
-                                <span class="text-gray-400 font-bold text-xs w-4 text-center">${index + 1}</span>
-                                <span class="font-semibold text-gray-700 text-xs">${item.val}</span>
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <span class="text-gray-800 font-bold text-xs bg-gray-100 px-2 py-0.5 rounded border border-gray-200 block">${item.count.toLocaleString('id-ID')}</span>
-                                <span class="text-[10px] text-gray-500 font-bold">${item.pct}%</span>
-                            </div>
-                        </li>`;
-                    });
-                    diagContainer.innerHTML = diagHtml || '<li class="p-3 text-center text-gray-400 text-xs">Tidak ada data</li>';
-                }
-
-                // KOTAK 4: TINDAK LANJUT
-                const stlContainer = document.getElementById('list-status-tindak-lanjut');
-                if (stlContainer && data.status_tindak_lanjut) {
-                    let stlHtml = '';
-                    for (const [key, value] of Object.entries(data.status_tindak_lanjut)) {
-                        stlHtml += `
-                        <li class="flex justify-between items-center py-2 px-2.5 hover:bg-gray-50 rounded-lg border-b border-gray-50 last:border-none">
-                            <span class="text-gray-700 font-medium text-xs">${key}</span>
-                            <span class="font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 text-xs">${value.toLocaleString('id-ID')}</span>
-                        </li>`;
-                    }
-                    stlContainer.innerHTML = stlHtml || '<li class="p-3 text-center text-gray-400 text-xs">Tidak ada data</li>';
-                }
-
-                // Render AI Text Output
-                mainText.innerHTML = formatAnalysisText(activePeriode, data, topNegaraData);
-
-            } catch (error) {
-                console.error("Gagal mengambil data detail:", error);
-            } finally {
-                if (loadingState) loadingState.classList.add('hidden');
-            }
+        msg.textContent = message;
+        content.className = "flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ";
+        if (type === 'success') {
+            content.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+            icon.className = "fa-solid fa-circle-check text-emerald-600 text-lg";
+        } else {
+            content.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
+            icon.className = "fa-solid fa-circle-exclamation text-red-600 text-lg";
         }
 
-        function updateFilterPills() {
-            if (!activeGejala && !activeDiagnosis && !activeNegaraDetail) {
-                filtersContainer.classList.add('hidden');
-                titleGejalaAktif.classList.add('hidden');
-                titleDiagAktif.classList.add('hidden');
-                titleNegaraAktif.classList.add('hidden');
-            } else {
-                filtersContainer.classList.remove('hidden');
-                filtersContainer.classList.add('flex');
-                
-                if (activeNegaraDetail) {
-                    pillNegara.classList.remove('hidden'); pillNegara.classList.add('flex');
-                    textPillNegara.textContent = `Negara: ${activeNegaraDetail}`;
-                    titleNegaraAktif.classList.remove('hidden');
-                } else {
-                    pillNegara.classList.add('hidden'); pillNegara.classList.remove('flex');
-                    titleNegaraAktif.classList.add('hidden');
-                }
+        toast.classList.remove('translate-y-20', 'opacity-0'); toast.classList.add('translate-y-0', 'opacity-100');
+        setTimeout(() => { toast.classList.remove('translate-y-0', 'opacity-100'); toast.classList.add('translate-y-20', 'opacity-0'); }, 3500);
+    }
 
-                if (activeGejala) {
-                    pillGejala.classList.remove('hidden'); pillGejala.classList.add('flex');
-                    textPillGejala.textContent = `Gejala: ${activeGejala}`;
-                    titleGejalaAktif.classList.remove('hidden');
-                } else {
-                    pillGejala.classList.add('hidden'); pillGejala.classList.remove('flex');
-                    titleGejalaAktif.classList.add('hidden');
-                }
-
-                if (activeDiagnosis) {
-                    pillDiag.classList.remove('hidden'); pillDiag.classList.add('flex');
-                    textPillDiag.textContent = `Diagnosis: ${activeDiagnosis}`;
-                    titleDiagAktif.classList.remove('hidden');
-                } else {
-                    pillDiag.classList.add('hidden'); pillDiag.classList.remove('flex');
-                    titleDiagAktif.classList.add('hidden');
-                }
-            }
+    document.getElementById('filter-min-riwayat').addEventListener('change', renderTabelRasio);
+    document.getElementById('filter-urutkan').addEventListener('change', renderTabelRasio);
+    document.getElementById('filter-min-verif').addEventListener('change', renderVerifikasi);
+    document.getElementById('filter-urutkan-verif').addEventListener('change', handleTableSortVerifChange);
+    document.getElementById('mode-prioritas-verif').addEventListener('change', handleModePrioritasChange);
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible' && state.dataLanding) {
+            await syncTerjangkitData(true);
+            renderVerifikasi();
         }
+    });
 
-        function selectNegaraDetail(val) { activeNegaraDetail = (activeNegaraDetail === val) ? null : val; fetchDetailDashboardData(); }
-        function selectGejala(val) { activeGejala = (activeGejala === val) ? null : val; fetchDetailDashboardData(); }
-        function selectDiagnosis(val) { activeDiagnosis = (activeDiagnosis === val) ? null : val; fetchDetailDashboardData(); }
-
-        function clearNegaraDetail() { activeNegaraDetail = null; fetchDetailDashboardData(); }
-        function clearGejala() { activeGejala = null; fetchDetailDashboardData(); }
-        function clearDiag() { activeDiagnosis = null; fetchDetailDashboardData(); }
-        
-        function resetAllFilters() { 
-            activeGejala = null; 
-            activeDiagnosis = null; 
-            activeNegaraDetail = null;
-            fetchDetailDashboardData(); 
-        }
-
-        document.getElementById('filter-min-riwayat').addEventListener('change', renderTabelRasio);
-        document.getElementById('filter-urutkan').addEventListener('change', renderTabelRasio);
-        document.getElementById('filter-min-verif').addEventListener('change', renderVerifikasi);
-        document.getElementById('filter-urutkan-verif').addEventListener('change', renderVerifikasi);
-
-        initDashboard();
-    </script>
+    initDashboard();
+</script>
 </body>
 </html>

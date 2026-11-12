@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelola Negara Terjangkit Bulanan - Portal BBKK</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md">
+        <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium bg-white">
+            <i id="toast-icon" class="fa-solid text-lg"></i>
+            <span id="toast-message" class="text-gray-800">Notifikasi...</span>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS PERIODE -->
+    <div id="modal-confirm-delete" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 max-w-md w-full p-6 space-y-4">
+            <div class="flex items-start gap-3.5">
+                <div class="w-11 h-11 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg flex-shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Hapus Periode Terjangkit?</h3>
+                    <p class="text-xs text-gray-600 mt-1 leading-relaxed" id="modal-delete-desc">
+                        Apakah Anda yakin ingin menghapus periode ini?
+                    </p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2.5 pt-2 border-t border-gray-100">
+                <button type="button" onclick="closeDeletePeriodModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-colors">
+                    Batal
+                </button>
+                <button type="button" id="btn-confirm-delete-exec" onclick="executeDeletePeriod()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> Ya, Hapus Periode
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-teal-800 text-white shadow-md py-3 px-6 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+                <h1 class="text-lg font-bold tracking-wide flex items-center gap-2">
+                    <i class="fa-solid fa-virus-covid"></i> Kelola Daftar Negara Terjangkit (Update Bulanan)
+                </h1>
+                <p class="text-[11px] text-teal-200">Pembaruan acuan daerah terjangkit WHO / Kemenkes untuk evaluasi prioritas PPLN</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="text-xs bg-white text-teal-900 hover:bg-teal-50 px-3.5 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke Portal Utama
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 flex-1 w-full space-y-6">
+
+        <!-- BANNER KONFIRMASI BERHASIL UPLOAD & SIMPAN -->
+        <div id="upload-success-banner" class="hidden bg-emerald-50 border border-emerald-300 rounded-xl p-4 shadow-sm flex items-start justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fa-solid fa-check text-base"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-emerald-900" id="banner-success-title">Data Berhasil Diunggah & Disimpan!</h4>
+                    <p class="text-xs text-emerald-800 mt-0.5" id="banner-success-desc">-</p>
+                </div>
+            </div>
+            <button onclick="dismissUploadSuccessBanner()" class="text-emerald-700 hover:text-emerald-900 px-2 py-1 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors" title="Tutup notifikasi">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+
+        <!-- 1. PILIH PERIODE BULAN & TAHUN -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-gray-100">
+                <div>
+                    <h2 class="text-base font-bold text-gray-800">1. Pilih Periode Acuan (Bulan & Tahun)</h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Data yang diunggah atau diinput akan tersimpan sesuai periode bulan yang dipilih.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                    <select id="select-bulan" class="px-3 py-2 text-sm border border-gray-300 rounded-lg font-semibold bg-white focus:ring-teal-500 focus:border-teal-500">
+                        <option value="01">Januari</option>
+                        <option value="02">Februari</option>
+                        <option value="03">Maret</option>
+                        <option value="04">April</option>
+                        <option value="05">Mei</option>
+                        <option value="06">Juni</option>
+                        <option value="07">Juli</option>
+                        <option value="08">Agustus</option>
+                        <option value="09" selected>September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                    <select id="select-tahun" class="px-3 py-2 text-sm border border-gray-300 rounded-lg font-semibold bg-white focus:ring-teal-500 focus:border-teal-500">
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                    </select>
+                    <button onclick="loadPeriodData()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                        Muat Periode
+                    </button>
+                    <button id="btn-delete-period" onclick="openDeletePeriodModal()" class="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-bold rounded-lg transition-colors flex items-center gap-1.5" title="Hapus periode ini dari daftar tersimpan">
+                        <i class="fa-solid fa-trash-can text-xs"></i> Hapus Periode
+                    </button>
+                </div>
+            </div>
+
+            <!-- Riwayat Periode Tersimpan -->
+            <div class="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Periode Tersimpan:</span>
+                    <div id="saved-periods-container" class="flex flex-wrap gap-1.5">
+                        <span class="text-xs text-gray-400">Memuat...</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="copy-source-periode" class="px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-gray-50 font-medium">
+                        <option value="">-- Salin dari bulan lain --</option>
+                    </select>
+                    <button onclick="copyFromPeriod()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg border border-gray-200 transition-colors">
+                        <i class="fa-regular fa-copy mr-1"></i> Salin Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. DUA METODE UPDATE: UPLOAD EXCEL & INPUT MANUAL -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- CARD A: UPLOAD EXCEL OTOMATIS -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs"><i class="fa-solid fa-file-excel"></i></span>
+                            Upload File Excel Pusat (.xlsx)
+                        </h3>
+                        <button onclick="downloadTemplateExcel()" class="text-xs text-teal-700 hover:text-teal-900 font-bold underline flex items-center gap-1">
+                            <i class="fa-solid fa-download"></i> Unduh Template
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Unggah atau tarik & lepas (<i>drag & drop</i>) file resmi <i>Daftar Negara Terjangkit</i> bulanan dari pusat. Sistem otomatis membaca kolom <strong>Nama Negara</strong> dan <strong>Penyakit</strong>.</p>
+
+                    <div class="space-y-3">
+                        <!-- DROP ZONE -->
+                        <div id="drop-zone" class="border-2 border-dashed border-gray-300 hover:border-teal-500 rounded-xl p-4 text-center bg-gray-50/50 transition-all cursor-pointer">
+                            <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" class="hidden">
+                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                <div class="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-lg">
+                                    <i class="fa-solid fa-file-arrow-up"></i>
+                                </div>
+                                <div class="text-xs text-gray-700 font-medium">
+                                    <span class="inline-block px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg mr-1.5 transition-colors">Pilih File</span>
+                                    atau tarik & lepas file ke kotak ini
+                                </div>
+                                <p class="text-[11px] text-gray-400">Mendukung format .xlsx, .xls, atau .csv</p>
+                            </div>
+                        </div>
+
+                        <!-- OVERVIEW / PREVIEW FILE SEBELUM UPLOAD -->
+                        <div id="file-preview-box" class="hidden rounded-xl border border-teal-200 bg-teal-50/40 p-3.5 space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] flex-shrink-0">
+                                        <i class="fa-solid fa-check"></i>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-emerald-900">File berhasil dimuat & siap disimpan</p>
+                                        <p class="text-[11px] text-gray-600 truncate" id="preview-file-name">-</p>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="clearSelectedFile()" class="px-2 py-1 text-[11px] font-bold text-red-600 hover:bg-red-50 rounded-md transition-colors flex-shrink-0" title="Batalkan file ini">
+                                    <i class="fa-solid fa-xmark mr-0.5"></i> Ganti
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-lg p-2.5 border border-teal-100 space-y-2">
+                                <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                                    <span class="px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-bold" id="preview-stat-rows">0 baris</span>
+                                    <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold" id="preview-stat-unique">0 negara unik</span>
+                                </div>
+                                <div id="preview-disease-badges" class="flex flex-wrap gap-1.5"></div>
+                            </div>
+
+                            <div class="bg-white rounded-lg border border-teal-100 overflow-hidden">
+                                <div class="px-2.5 py-1.5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase">Pratinjau Data Terbaca</span>
+                                    <span class="text-[10px] text-gray-400" id="preview-table-note">Menampilkan 5 data teratas</span>
+                                </div>
+                                <div class="max-h-32 overflow-y-auto custom-scroll">
+                                    <table class="w-full text-left text-[11px]">
+                                        <thead class="bg-gray-50/70 text-gray-500 border-b border-gray-100">
+                                            <tr>
+                                                <th class="py-1 px-2.5 w-8">No</th>
+                                                <th class="py-1 px-2.5">Negara</th>
+                                                <th class="py-1 px-2.5">Penyakit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="preview-tbody" class="divide-y divide-gray-50 text-gray-700"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Mode Pembaruan</label>
+                            <select id="upload-mode" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg font-medium bg-white">
+                                <option value="replace" selected>Timpa seluruh daftar pada bulan terpilih (Rekomendasi)</option>
+                                <option value="merge">Gabungkan dengan daftar yang sudah ada di bulan ini</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="uploadExcelFile()" id="btn-upload-excel" class="mt-4 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Unggah & Simpan ke Periode Terpilih
+                </button>
+            </div>
+
+            <!-- CARD B: INSERT / EDIT MANUAL -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800 flex items-center gap-2 mb-2">
+                        <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs"><i class="fa-solid fa-pen-to-square"></i></span>
+                        Tambah / Update Negara Manual
+                    </h3>
+                    <p class="text-xs text-gray-500 mb-4">Gunakan form ini untuk menambah 1–2 negara baru atau memperbarui status penyakit jika ada surat edaran susulan di tengah bulan.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Nama Negara (Bahasa Inggris sesuai SSHP)</label>
+                            <input type="text" id="input-manual-negara" list="datalist-negara" placeholder="Contoh: Cambodia, Brazil, Saudi Arabia..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium">
+                            <datalist id="datalist-negara"></datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Jenis Penyakit / Keterangan</label>
+                            <input type="text" id="input-manual-penyakit" list="datalist-penyakit" placeholder="Contoh: Yellow Fever, Flu Burung, Ebola..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 font-medium">
+                            <datalist id="datalist-penyakit">
+                                <option value="Yellow Fever">
+                                <option value="Flu Burung">
+                                <option value="Ebola">
+                                <option value="MERS-CoV">
+                                <option value="Polio">
+                                <option value="Mpox">
+                                <option value="Meningitis">
+                            </datalist>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-700 mb-1 uppercase">Jika Negara Sudah Ada di Bulan Ini</label>
+                            <select id="manual-mode" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg font-medium bg-white">
+                                <option value="merge" selected>Gabungkan penyakitnya (contoh: Yellow Fever / Ebola)</option>
+                                <option value="overwrite">Ganti keterangan penyakit dengan yang baru</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="submitManualCountry()" class="mt-4 w-full py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus-circle"></i> Simpan Negara ke Periode Terpilih
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. TABEL DAFTAR NEGARA TERJANGKIT AKTIF -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50/50">
+                <div>
+                    <h3 class="text-base font-bold text-gray-800">
+                        Daftar Negara Terjangkit — <span id="label-periode-aktif" class="text-teal-700">September 2026</span>
+                    </h3>
+                    <p class="text-[11px] text-gray-500 mt-0.5">
+                        Total: <strong id="total-negara-aktif">0</strong> negara | Terakhir diperbarui: <strong id="info-updated-at">-</strong> (<span id="info-source">-</span>)
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="search-tabel-terjangkit" onkeyup="filterTabelTerjangkit()" placeholder="Cari negara / penyakit..." class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white w-52">
+                    <button onclick="exportCurrentToExcel()" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1">
+                        <i class="fa-solid fa-file-export"></i> Export
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scroll max-h-[420px]">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead class="sticky top-0 bg-gray-50 shadow-sm z-10">
+                        <tr class="text-gray-500 text-[10px] uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-2.5 px-4 font-bold w-14 text-center">No</th>
+                            <th class="py-2.5 px-4 font-bold">Nama Negara</th>
+                            <th class="py-2.5 px-4 font-bold">Penyakit / Keterangan</th>
+                            <th class="py-2.5 px-4 font-bold text-center w-24">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-terjangkit" class="text-gray-700 divide-y divide-gray-100">
+                        <tr><td colspan="4" class="py-6 text-center text-gray-400">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000";
+        const STORAGE_KEY_PERIODE = "terjangkit_active_periode";
+        const STORAGE_KEY_UPLOAD_BANNER = "terjangkit_upload_success_banner";
+        const STORAGE_KEY_HIDDEN_PERIODS = "terjangkit_hidden_empty_periods";
+
+        const namaBulanMap = {
+            "01": "Januari", "02": "Februari", "03": "Maret", "04": "April",
+            "05": "Mei", "06": "Juni", "07": "Juli", "08": "Agustus",
+            "09": "September", "10": "Oktober", "11": "November", "12": "Desember"
+        };
+
+        const TEMPLATE_SEPTEMBER_2026 = [
+            { no: 1, negara: "Cambodia", penyakit: "Flu Burung" },
+            { no: 2, negara: "Angola", penyakit: "Yellow Fever" },
+            { no: 3, negara: "Argentina", penyakit: "Yellow Fever" },
+            { no: 4, negara: "Benin", penyakit: "Yellow Fever" },
+            { no: 5, negara: "Bolivia", penyakit: "Yellow Fever" },
+            { no: 6, negara: "Brazil", penyakit: "Yellow Fever" },
+            { no: 7, negara: "Burkina Faso", penyakit: "Yellow Fever" },
+            { no: 8, negara: "Burundi", penyakit: "Yellow Fever" },
+            { no: 9, negara: "Cameroon", penyakit: "Yellow Fever" },
+            { no: 10, negara: "Central African Republic", penyakit: "Yellow Fever" },
+            { no: 11, negara: "Chad", penyakit: "Yellow Fever" },
+            { no: 12, negara: "Colombia", penyakit: "Yellow Fever" },
+            { no: 13, negara: "Costa Rica", penyakit: "Yellow Fever" },
+            { no: 14, negara: "Cote d'Ivoire", penyakit: "Yellow Fever" },
+            { no: 15, negara: "Democratic Republic of the Congo", penyakit: "Yellow Fever" },
+            { no: 16, negara: "Ecuador", penyakit: "Yellow Fever" },
+            { no: 17, negara: "Equatorial Guinea", penyakit: "Yellow Fever" },
+            { no: 18, negara: "Ethiopia", penyakit: "Yellow Fever" },
+            { no: 19, negara: "French Guiana", penyakit: "Yellow Fever" },
+            { no: 20, negara: "Gabon", penyakit: "Yellow Fever" },
+            { no: 21, negara: "Gambia", penyakit: "Yellow Fever" },
+            { no: 22, negara: "Ghana", penyakit: "Yellow Fever" },
+            { no: 23, negara: "Guinea", penyakit: "Yellow Fever" },
+            { no: 24, negara: "Guinea-Bissau", penyakit: "Yellow Fever" },
+            { no: 25, negara: "Guyana", penyakit: "Yellow Fever" },
+            { no: 26, negara: "Kenya", penyakit: "Yellow Fever" },
+            { no: 27, negara: "Liberia", penyakit: "Yellow Fever" },
+            { no: 28, negara: "Mali", penyakit: "Yellow Fever" },
+            { no: 29, negara: "Mauritania", penyakit: "Yellow Fever" },
+            { no: 30, negara: "Niger", penyakit: "Yellow Fever" },
+            { no: 31, negara: "Nigeria", penyakit: "Yellow Fever" },
+            { no: 32, negara: "Panama", penyakit: "Yellow Fever" },
+            { no: 33, negara: "Paraguay", penyakit: "Yellow Fever" },
+            { no: 34, negara: "Peru", penyakit: "Yellow Fever" },
+            { no: 35, negara: "Republic of the Congo", penyakit: "Yellow Fever" },
+            { no: 36, negara: "Senegal", penyakit: "Yellow Fever" },
+            { no: 37, negara: "Sierra Leone", penyakit: "Yellow Fever" },
+            { no: 38, negara: "South Sudan", penyakit: "Yellow Fever" },
+            { no: 39, negara: "Sudan", penyakit: "Yellow Fever" },
+            { no: 40, negara: "Suriname", penyakit: "Yellow Fever" },
+            { no: 41, negara: "Togo", penyakit: "Yellow Fever" },
+            { no: 42, negara: "Trinidad and Tobago", penyakit: "Yellow Fever" },
+            { no: 43, negara: "Uganda", penyakit: "Yellow Fever" },
+            { no: 44, negara: "Venezuela", penyakit: "Yellow Fever" },
+            { no: 45, negara: "Democratic Republic of the Congo", penyakit: "Ebola" },
+            { no: 46, negara: "Kenya", penyakit: "Ebola" }
+        ];
+
+        let currentItems = [];
+        let currentAvailablePeriods = [];
+        let selectedUploadFile = null;
+
+        function formatPeriodeIndo(ym) {
+            if (!ym || !ym.includes("-")) return ym;
+            const [y, m] = ym.split("-");
+            return `${namaBulanMap[m] || m} ${y}`;
+        }
+
+        function getSelectedPeriode() {
+            const b = document.getElementById("select-bulan").value;
+            const t = document.getElementById("select-tahun").value;
+            return `${t}-${b}`;
+        }
+
+        function setDropdownPeriode(ym) {
+            if (!ym || !ym.includes("-")) return;
+            const [y, m] = ym.split("-");
+            document.getElementById("select-tahun").value = y;
+            document.getElementById("select-bulan").value = m;
+        }
+
+        function saveActivePeriode(ym) {
+            if (!ym || !/^\d{4}-\d{2}$/.test(ym)) return;
+            sessionStorage.setItem(STORAGE_KEY_PERIODE, ym);
+            const url = new URL(window.location.href);
+            url.searchParams.set("periode", ym);
+            window.history.replaceState({}, "", url);
+        }
+
+        function clearActivePeriode() {
+            sessionStorage.removeItem(STORAGE_KEY_PERIODE);
+            const url = new URL(window.location.href);
+            url.searchParams.delete("periode");
+            window.history.replaceState({}, "", url);
+        }
+
+        function getSavedPeriode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromUrl = urlParams.get("periode");
+            if (fromUrl && /^\d{4}-\d{2}$/.test(fromUrl)) return fromUrl;
+
+            const fromStorage = sessionStorage.getItem(STORAGE_KEY_PERIODE);
+            if (fromStorage && /^\d{4}-\d{2}$/.test(fromStorage)) return fromStorage;
+
+            return null;
+        }
+
+        function getHiddenEmptyPeriods() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY_HIDDEN_PERIODS) || "[]");
+            } catch {
+                return [];
+            }
+        }
+
+        function markPeriodHiddenIfEmpty(ym) {
+            const list = getHiddenEmptyPeriods();
+            if (!list.includes(ym)) {
+                list.push(ym);
+                localStorage.setItem(STORAGE_KEY_HIDDEN_PERIODS, JSON.stringify(list));
+            }
+        }
+
+        function unmarkPeriodHidden(ym) {
+            const list = getHiddenEmptyPeriods().filter(p => p !== ym);
+            localStorage.setItem(STORAGE_KEY_HIDDEN_PERIODS, JSON.stringify(list));
+        }
+
+        function showUploadSuccessBanner(info) {
+            if (!info) return;
+            const banner = document.getElementById("upload-success-banner");
+            document.getElementById("banner-success-title").textContent =
+                `Berhasil Diunggah & Disimpan ke Periode ${info.periodeLabel}!`;
+            document.getElementById("banner-success-desc").innerHTML =
+                `File <strong>${info.fileName}</strong> telah berhasil diproses pada pukul <strong>${info.timestamp}</strong>. ${info.detail || ""}`;
+            banner.classList.remove("hidden");
+        }
+
+        function dismissUploadSuccessBanner() {
+            document.getElementById("upload-success-banner").classList.add("hidden");
+            sessionStorage.removeItem(STORAGE_KEY_UPLOAD_BANNER);
+        }
+
+        function restoreUploadSuccessBanner() {
+            try {
+                const raw = sessionStorage.getItem(STORAGE_KEY_UPLOAD_BANNER);
+                if (!raw) return;
+                const info = JSON.parse(raw);
+                if (info && Date.now() - info.createdAt < 30000) {
+                    showUploadSuccessBanner(info);
+                } else {
+                    sessionStorage.removeItem(STORAGE_KEY_UPLOAD_BANNER);
+                }
+            } catch (e) {
+                sessionStorage.removeItem(STORAGE_KEY_UPLOAD_BANNER);
+            }
+        }
+
+        // --- DRAG & DROP + PREVIEW FILE EXCEL ---
+        function setupFileUploadInteractions() {
+            const dropZone = document.getElementById("drop-zone");
+            const fileInput = document.getElementById("excel-file-input");
+
+            dropZone.addEventListener("click", () => fileInput.click());
+
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    handleFileSelected(e.target.files[0]);
+                }
+            });
+
+            ["dragenter", "dragover"].forEach(evtName => {
+                dropZone.addEventListener(evtName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add("border-teal-600", "bg-teal-50/70", "scale-[1.01]");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(evtName => {
+                dropZone.addEventListener(evtName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove("border-teal-600", "bg-teal-50/70", "scale-[1.01]");
+                });
+            });
+
+            dropZone.addEventListener("drop", (e) => {
+                const files = e.dataTransfer?.files;
+                if (files && files.length > 0) {
+                    handleFileSelected(files[0]);
+                }
+            });
+        }
+
+        async function handleFileSelected(file) {
+            const allowedExt = [".xlsx", ".xls", ".csv"];
+            const lowerName = file.name.toLowerCase();
+            if (!allowedExt.some(ext => lowerName.endsWith(ext))) {
+                showToast("Format file harus .xlsx, .xls, atau .csv.", "error");
+                return;
+            }
+
+            selectedUploadFile = file;
+
+            try {
+                const buffer = await file.arrayBuffer();
+                const workbook = XLSX.read(buffer, { type: "array" });
+                const targetSheetName = workbook.SheetNames.find(s => s.toLowerCase() === "tabel") || workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[targetSheetName];
+                const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+                let headerRowIdx = -1;
+                let colNegara = -1;
+                let colPenyakit = -1;
+
+                for (let r = 0; r < Math.min(rows.length, 20); r++) {
+                    const row = rows[r].map(c => String(c).trim().toLowerCase());
+                    const idxNeg = row.findIndex(c => c.includes("negara"));
+                    const idxPen = row.findIndex(c => c.includes("penyakit") || c.includes("keterangan"));
+                    if (idxNeg !== -1) {
+                        headerRowIdx = r;
+                        colNegara = idxNeg;
+                        colPenyakit = idxPen !== -1 ? idxPen : idxNeg + 1;
+                        break;
+                    }
+                }
+
+                if (headerRowIdx === -1) {
+                    headerRowIdx = -1;
+                    colNegara = rows[0] && rows[0].length >= 3 ? 1 : 0;
+                    colPenyakit = colNegara + 1;
+                }
+
+                const parsedRows = [];
+                const uniqueCountries = new Map();
+                const diseaseCounts = {};
+
+                for (let r = headerRowIdx + 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    if (!row) continue;
+                    const negara = String(row[colNegara] ?? "").trim();
+                    const penyakitRaw = String(row[colPenyakit] ?? "").trim();
+                    if (!negara || negara.toLowerCase() === "nan" || negara === "-") continue;
+
+                    const penyakit = penyakitRaw || "Daerah Terjangkit";
+                    parsedRows.push({ negara, penyakit });
+
+                    diseaseCounts[penyakit] = (diseaseCounts[penyakit] || 0) + 1;
+
+                    const key = negara.toLowerCase();
+                    if (!uniqueCountries.has(key)) {
+                        uniqueCountries.set(key, { negara, penyakit });
+                    } else {
+                        const existing = uniqueCountries.get(key);
+                        if (!existing.penyakit.toLowerCase().includes(penyakit.toLowerCase())) {
+                            existing.penyakit += ` / ${penyakit}`;
+                        }
+                    }
+                }
+
+                if (parsedRows.length === 0) {
+                    showToast("File berhasil dibaca, tetapi tidak ditemukan baris negara.", "error");
+                    clearSelectedFile();
+                    return;
+                }
+
+                const sizeKB = (file.size / 1024).toFixed(1);
+                document.getElementById("preview-file-name").textContent = `${file.name} (${sizeKB} KB • Sheet: ${targetSheetName})`;
+                document.getElementById("preview-stat-rows").textContent = `${parsedRows.length} baris data`;
+                document.getElementById("preview-stat-unique").textContent = `${uniqueCountries.size} negara unik`;
+
+                const badgesHtml = Object.entries(diseaseCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([penyakit, count]) => `
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            ${penyakit}: <strong>${count}</strong>
+                        </span>
+                    `).join("");
+                document.getElementById("preview-disease-badges").innerHTML = badgesHtml;
+
+                const previewSlice = parsedRows.slice(0, 5);
+                document.getElementById("preview-tbody").innerHTML = previewSlice.map((item, idx) => `
+                    <tr>
+                        <td class="py-1 px-2.5 text-gray-400 font-bold">${idx + 1}</td>
+                        <td class="py-1 px-2.5 font-semibold text-gray-800">${item.negara}</td>
+                        <td class="py-1 px-2.5 text-amber-800 font-medium">${item.penyakit}</td>
+                    </tr>
+                `).join("");
+
+                document.getElementById("preview-table-note").textContent =
+                    parsedRows.length > 5
+                        ? `Menampilkan 5 dari ${parsedRows.length} baris`
+                        : `Menampilkan semua (${parsedRows.length}) baris`;
+
+                document.getElementById("file-preview-box").classList.remove("hidden");
+                showToast(`File "${file.name}" berhasil dimuat (${uniqueCountries.size} negara unik).`, "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal membaca pratinjau file Excel. Pastikan format sesuai.", "error");
+            }
+        }
+
+        function clearSelectedFile() {
+            selectedUploadFile = null;
+            document.getElementById("excel-file-input").value = "";
+            document.getElementById("file-preview-box").classList.add("hidden");
+        }
+
+        async function fetchTerjangkitData(targetPeriode = null) {
+            try {
+                let url = new URL(`${API_BASE}/api/terjangkit`);
+                if (targetPeriode) url.searchParams.append("periode", targetPeriode);
+
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const hiddenEmpty = getHiddenEmptyPeriods();
+                const validPeriods = (data.available_periods || []).filter(p => !(p.count === 0 && hiddenEmpty.includes(p.periode)));
+                currentAvailablePeriods = validPeriods;
+
+                let activePeriode = targetPeriode || data.selected_periode;
+                if (!targetPeriode && validPeriods.length > 0 && !validPeriods.some(p => p.periode === activePeriode)) {
+                    activePeriode = validPeriods[0].periode;
+                }
+
+                if (activePeriode) {
+                    setDropdownPeriode(activePeriode);
+                    saveActivePeriode(activePeriode);
+                }
+
+                document.getElementById("label-periode-aktif").textContent = formatPeriodeIndo(activePeriode);
+
+                const foundPeriod = validPeriods.find(p => p.periode === activePeriode);
+                const btnDeletePeriod = document.getElementById("btn-delete-period");
+
+                if (foundPeriod) {
+                    currentItems = data.items || [];
+                    document.getElementById("info-updated-at").textContent = foundPeriod.updated_at;
+                    document.getElementById("info-source").textContent = foundPeriod.source;
+                    btnDeletePeriod.disabled = false;
+                    btnDeletePeriod.classList.remove("opacity-50", "cursor-not-allowed");
+                } else {
+                    currentItems = [];
+                    document.getElementById("info-updated-at").textContent = "Belum ada data";
+                    document.getElementById("info-source").textContent = "Silakan upload Excel atau tambah manual";
+                    btnDeletePeriod.disabled = true;
+                    btnDeletePeriod.classList.add("opacity-50", "cursor-not-allowed");
+                }
+
+                document.getElementById("total-negara-aktif").textContent = currentItems.length;
+                renderSavedPeriods(validPeriods, activePeriode);
+                populateDatalistNegara(data.known_countries || []);
+                renderTable(currentItems);
+            } catch (err) {
+                showToast("Gagal terhubung ke server backend.", "error");
+            }
+        }
+
+        function loadPeriodData() {
+            const periode = getSelectedPeriode();
+            saveActivePeriode(periode);
+            fetchTerjangkitData(periode);
+        }
+
+        // --- MODAL KONFIRMASI & EKSEKUSI HAPUS PERIODE ---
+        function openDeletePeriodModal() {
+            const periode = getSelectedPeriode();
+            const labelIndo = formatPeriodeIndo(periode);
+            const foundPeriod = currentAvailablePeriods.find(p => p.periode === periode);
+
+            if (!foundPeriod && (!currentItems || currentItems.length === 0)) {
+                showToast(`Periode ${labelIndo} tidak ada di daftar tersimpan.`, "error");
+                return;
+            }
+
+            const jumlah = foundPeriod ? foundPeriod.count : currentItems.length;
+            document.getElementById("modal-delete-desc").innerHTML =
+                `Apakah Anda yakin ingin menghapus periode <strong>${labelIndo}</strong> (${jumlah} negara)?<br>Data akan langsung dihapus dari daftar <strong>Periode Tersimpan</strong>.`;
+
+            const modal = document.getElementById("modal-confirm-delete");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeDeletePeriodModal() {
+            const modal = document.getElementById("modal-confirm-delete");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        async function executeDeletePeriod() {
+            const periode = getSelectedPeriode();
+            const labelIndo = formatPeriodeIndo(periode);
+            const btnExec = document.getElementById("btn-confirm-delete-exec");
+
+            btnExec.disabled = true;
+            btnExec.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...`;
+
+            try {
+                const url = new URL(`${API_BASE}/api/terjangkit/periode`);
+                url.searchParams.append("periode", periode);
+                const res = await fetch(url, { method: "DELETE" });
+
+                if (!res.ok) {
+                    if (res.status === 404 || res.status === 405) {
+                        // Fallback jika backend belum restart: hapus semua item & sembunyikan badge periode kosong
+                        for (const item of currentItems) {
+                            const delUrl = new URL(`${API_BASE}/api/terjangkit/manual`);
+                            delUrl.searchParams.append("periode", periode);
+                            delUrl.searchParams.append("negara", item.negara);
+                            await fetch(delUrl, { method: "DELETE" });
+                        }
+                        markPeriodHiddenIfEmpty(periode);
+                    } else {
+                        const errData = await res.json();
+                        throw new Error(errData.detail || "Gagal menghapus periode.");
+                    }
+                }
+
+                closeDeletePeriodModal();
+                clearActivePeriode();
+                showToast(`Periode ${labelIndo} berhasil dihapus dari daftar tersimpan!`, "success");
+
+                // Muat ulang ke periode terbaru yang masih tersisa
+                await fetchTerjangkitData(null);
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btnExec.disabled = false;
+                btnExec.innerHTML = `<i class="fa-solid fa-trash-can"></i> Ya, Hapus Periode`;
+            }
+        }
+
+        function renderSavedPeriods(periodsList, activePeriode) {
+            const container = document.getElementById("saved-periods-container");
+            const copySelect = document.getElementById("copy-source-periode");
+            copySelect.innerHTML = '<option value="">-- Salin dari bulan lain --</option>';
+
+            if (periodsList.length === 0) {
+                container.innerHTML = '<span class="text-xs text-gray-400">Belum ada periode tersimpan</span>';
+                return;
+            }
+
+            container.innerHTML = periodsList.map(p => {
+                const isActive = p.periode === activePeriode;
+                const badgeClass = isActive
+                    ? "bg-teal-600 text-white border-teal-700"
+                    : "bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100";
+
+                const opt = document.createElement("option");
+                opt.value = p.periode;
+                opt.textContent = `${formatPeriodeIndo(p.periode)} (${p.count} negara)`;
+                copySelect.appendChild(opt);
+
+                return `<button onclick="selectQuickPeriod('${p.periode}')" class="px-2.5 py-1 rounded-full text-[11px] font-bold border transition-colors ${badgeClass}">
+                    ${formatPeriodeIndo(p.periode)} (${p.count})
+                </button>`;
+            }).join("");
+        }
+
+        function selectQuickPeriod(ym) {
+            setDropdownPeriode(ym);
+            saveActivePeriode(ym);
+            fetchTerjangkitData(ym);
+        }
+
+        function populateDatalistNegara(countries) {
+            const dl = document.getElementById("datalist-negara");
+            dl.innerHTML = countries.map(c => `<option value="${c}">`).join("");
+        }
+
+        function renderTable(items) {
+            const tbody = document.getElementById("tbody-terjangkit");
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-gray-400 font-medium">Belum ada daftar negara terjangkit untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map((item, idx) => `
+                <tr class="hover:bg-teal-50/40 transition-colors">
+                    <td class="py-2.5 px-4 text-center font-bold text-gray-400">${idx + 1}</td>
+                    <td class="py-2.5 px-4 font-bold text-gray-800">${item.negara}</td>
+                    <td class="py-2.5 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            ${item.penyakit}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-4 text-center">
+                        <button onclick="deleteCountry('${item.negara.replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-bold transition-colors" title="Hapus negara ini">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function filterTabelTerjangkit() {
+            const q = document.getElementById("search-tabel-terjangkit").value.toLowerCase().trim();
+            if (!q) {
+                renderTable(currentItems);
+                return;
+            }
+            const filtered = currentItems.filter(i =>
+                i.negara.toLowerCase().includes(q) || i.penyakit.toLowerCase().includes(q)
+            );
+            renderTable(filtered);
+        }
+
+        async function uploadExcelFile() {
+            const fileInput = document.getElementById("excel-file-input");
+            const fileToUpload = selectedUploadFile || (fileInput.files && fileInput.files[0]);
+
+            if (!fileToUpload) {
+                showToast("Pilih atau tarik file Excel (.xlsx) terlebih dahulu.", "error");
+                return;
+            }
+
+            const periode = getSelectedPeriode();
+            const periodeLabel = formatPeriodeIndo(periode);
+            saveActivePeriode(periode);
+            unmarkPeriodHidden(periode);
+
+            const mode = document.getElementById("upload-mode").value;
+            const formData = new FormData();
+            formData.append("file", fileToUpload);
+            formData.append("periode", periode);
+            formData.append("mode", mode);
+
+            const btn = document.getElementById("btn-upload-excel");
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Mengunggah & Menyimpan...`;
+
+            const bannerPayload = {
+                periode,
+                periodeLabel,
+                fileName: fileToUpload.name,
+                detail: `Mode pembaruan: <strong>${mode === "replace" ? "Timpa seluruh daftar" : "Gabungkan data"}</strong>.`,
+                timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+                createdAt: Date.now()
+            };
+            sessionStorage.setItem(STORAGE_KEY_UPLOAD_BANNER, JSON.stringify(bannerPayload));
+
+            try {
+                const res = await fetch(`${API_BASE}/api/terjangkit/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await res.json();
+                if (!res.ok) {
+                    sessionStorage.removeItem(STORAGE_KEY_UPLOAD_BANNER);
+                    throw new Error(result.detail || "Gagal upload file.");
+                }
+
+                bannerPayload.detail = result.message || bannerPayload.detail;
+                bannerPayload.createdAt = Date.now();
+                sessionStorage.setItem(STORAGE_KEY_UPLOAD_BANNER, JSON.stringify(bannerPayload));
+
+                clearSelectedFile();
+                showUploadSuccessBanner(bannerPayload);
+                showToast(result.message || `Berhasil disimpan ke ${periodeLabel}!`, "success");
+                fetchTerjangkitData(periode);
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Unggah & Simpan ke Periode Terpilih`;
+            }
+        }
+
+        async function submitManualCountry() {
+            const negara = document.getElementById("input-manual-negara").value.trim();
+            const penyakit = document.getElementById("input-manual-penyakit").value.trim();
+            const mode = document.getElementById("manual-mode").value;
+            const periode = getSelectedPeriode();
+
+            if (!negara) {
+                showToast("Nama negara wajib diisi.", "error");
+                return;
+            }
+
+            saveActivePeriode(periode);
+            unmarkPeriodHidden(periode);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/terjangkit/manual`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        periode: periode,
+                        negara: negara,
+                        penyakit: penyakit || "Daerah Terjangkit",
+                        mode: mode
+                    })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.detail || "Gagal menyimpan data.");
+
+                document.getElementById("input-manual-negara").value = "";
+                document.getElementById("input-manual-penyakit").value = "";
+                showToast(result.message, "success");
+                fetchTerjangkitData(periode);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function deleteCountry(negara) {
+            const periode = getSelectedPeriode();
+            if (!confirm(`Hapus "${negara}" dari daftar negara terjangkit periode ${formatPeriodeIndo(periode)}?`)) return;
+
+            saveActivePeriode(periode);
+
+            try {
+                const url = new URL(`${API_BASE}/api/terjangkit/manual`);
+                url.searchParams.append("periode", periode);
+                url.searchParams.append("negara", negara);
+
+                const res = await fetch(url, { method: "DELETE" });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.detail || "Gagal menghapus data.");
+
+                showToast(result.message, "success");
+                fetchTerjangkitData(periode);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function copyFromPeriod() {
+            const fromPeriode = document.getElementById("copy-source-periode").value;
+            const toPeriode = getSelectedPeriode();
+            if (!fromPeriode) {
+                showToast("Pilih periode sumber yang ingin disalin.", "error");
+                return;
+            }
+            if (fromPeriode === toPeriode) {
+                showToast("Periode sumber dan tujuan sama.", "error");
+                return;
+            }
+
+            saveActivePeriode(toPeriode);
+            unmarkPeriodHidden(toPeriode);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/terjangkit/copy`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ from_periode: fromPeriode, to_periode: toPeriode })
+                });
+                const result = await res.json();
+                if (!res.ok) throw new Error(result.detail || "Gagal menyalin data.");
+
+                showToast(result.message, "success");
+                fetchTerjangkitData(toPeriode);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        function downloadTemplateExcel() {
+            const wsKemenkes = XLSX.utils.aoa_to_sheet([
+                ["DAFTAR NEGARA TERJANGKIT - KEMENTERIAN KESEHATAN RI"],
+                ["Acuan Evaluasi Prioritas PPLN Bandara Internasional I Gusti Ngurah Rai"],
+                ["Petunjuk: Isi atau perbarui daftar negara dan penyakit pada sheet 'tabel' mulai baris ke-5 (kolom B, C, D)."]
+            ]);
+            wsKemenkes["!cols"] = [{ wch: 75 }];
+
+            const aoaTabel = [
+                ["No.", "Nama Negara", "Penyakit"],
+                ...TEMPLATE_SEPTEMBER_2026.map(item => [item.no, item.negara, item.penyakit])
+            ];
+            const wsTabel = XLSX.utils.aoa_to_sheet(aoaTabel, { origin: "B4" });
+            wsTabel["!cols"] = [
+                { wch: 4 },
+                { wch: 6 },
+                { wch: 36 },
+                { wch: 24 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, wsKemenkes, "Kemenkes");
+            XLSX.utils.book_append_sheet(wb, wsTabel, "tabel");
+            XLSX.writeFile(wb, "Template_Daftar_Negara_Terjangkit.xlsx");
+            showToast("Template Excel (format September 2026) berhasil diunduh!", "success");
+        }
+
+        function exportCurrentToExcel() {
+            if (!currentItems || currentItems.length === 0) {
+                showToast("Tidak ada data untuk diexport.", "error");
+                return;
+            }
+            const aoaTabel = [
+                ["No.", "Nama Negara", "Penyakit"],
+                ...currentItems.map((item, idx) => [idx + 1, item.negara, item.penyakit])
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(aoaTabel, { origin: "B4" });
+            ws["!cols"] = [{ wch: 4 }, { wch: 6 }, { wch: 36 }, { wch: 24 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "tabel");
+            XLSX.writeFile(wb, `Daftar_Negara_Terjangkit_${getSelectedPeriode()}.xlsx`);
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast-notification");
+            const content = document.getElementById("toast-content");
+            const icon = document.getElementById("toast-icon");
+            const msg = document.getElementById("toast-message");
+
+            msg.textContent = message;
+            content.className = "flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ";
+            if (type === "success") {
+                content.classList.add("bg-emerald-50", "border-emerald-200", "text-emerald-900");
+                icon.className = "fa-solid fa-circle-check text-emerald-600 text-lg";
+            } else {
+                content.classList.add("bg-red-50", "border-red-200", "text-red-900");
+                icon.className = "fa-solid fa-circle-exclamation text-red-600 text-lg";
+            }
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            toast.classList.add("translate-y-0", "opacity-100");
+            setTimeout(() => {
+                toast.classList.remove("translate-y-0", "opacity-100");
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3500);
+        }
+
+        setupFileUploadInteractions();
+        restoreUploadSuccessBanner();
+
+        const initialPeriode = getSavedPeriode();
+        if (initialPeriode) setDropdownPeriode(initialPeriode);
+        fetchTerjangkitData(initialPeriode);
+    </script>
+</body>
+</html>
