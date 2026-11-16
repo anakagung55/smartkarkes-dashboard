@@ -631,11 +631,20 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
             df_trend = df_trend[df_trend[n_col].astype(str).str.contains(negara, case=False, na=False)]
 
         if 'trend_year' in df_trend.columns:
+            # Cari bulan terakhir yang sudah ada datanya di tahun 2026 secara keseluruhan
+            all_2026 = df_merah[df_merah['trend_year'] == 2026]
+            max_month_2026 = int(all_2026['trend_month'].max()) if not all_2026.empty else 0
+
             df_2026 = df_trend[df_trend['trend_year'] == 2026]
             if not df_2026.empty:
                 m_2026 = df_2026.groupby('trend_month').size()
                 for m in range(1, 13):
-                    tren_2026[m-1] = int(m_2026.get(m, 0))
+                    if m <= max_month_2026:
+                        tren_2026[m-1] = int(m_2026.get(m, 0))
+                    else:
+                        tren_2026[m-1] = None
+            else:
+                tren_2026 = [None]*12
 
             df_2025 = df_trend[df_trend['trend_year'] == 2025]
             if not df_2025.empty:

@@ -714,7 +714,7 @@
 
         showLoading(true, "Memuat Data Portal...", "Mengambil data rekapitulasi awal.");
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/landing');
+            const response = await fetch('https://smartkarkes-dashboard.onrender.com/api/landing');
             state.dataLanding = await response.json();
 
             populateDropdownNegara(state.dataLanding.negara);
@@ -740,7 +740,7 @@
         
         elFilterNegaraTren.value = state.filterGlobal.negara;
         
-        let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
+        let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
         if (startDate && endDate) {
             apiUrl.searchParams.append('start_date', startDate);
             apiUrl.searchParams.append('end_date', endDate);
@@ -781,7 +781,7 @@
     async function syncDataFromServer() {
         showLoading(true, "Sinkronisasi Cloud...", "Sedang mendownload ulang data...");
         try {
-            await fetch('http://127.0.0.1:8000/api/sync');
+            await fetch('https://smartkarkes-dashboard.onrender.com/api/sync');
             await applyGlobalFilters();
             showToast("Sinkronisasi data berhasil diperbarui!", "success");
         } catch(e) {
@@ -975,7 +975,7 @@
         try {
             const targetDate = state.filterGlobal.endDate || state.filterGlobal.startDate;
             const ym = targetDate ? targetDate.slice(0, 7) : '';
-            const url = new URL('http://127.0.0.1:8000/api/terjangkit');
+            const url = new URL('https://smartkarkes-dashboard.onrender.com/api/terjangkit');
             if (ym) url.searchParams.append('periode', ym);
 
             const res = await fetch(url);
@@ -1288,7 +1288,7 @@
         
         showLoading(true, "Memperbarui Grafik Tren...", "Mengambil data tren bulanan.");
         try {
-            let apiUrl = new URL('http://127.0.0.1:8000/api/landing');
+            let apiUrl = new URL('https://smartkarkes-dashboard.onrender.com/api/landing');
             if (negara && negara !== "Semua Negara") apiUrl.searchParams.append('negara', negara);
             
             const response = await fetch(apiUrl);
