@@ -610,6 +610,27 @@ def delete_terjangkit_periode(periode: str):
     save_terjangkit_store(store)
     return {"status": "success", "message": f"Periode {periode} berhasil dihapus permanen."}
 
+@app.get("/api/terjangkit/backup-json", dependencies=[Depends(verify_admin_key)])
+def backup_terjangkit_json():
+    """Mengunduh seluruh isi negara_terjangkit.json (semua periode) dari server Render."""
+    return load_terjangkit_store()
+
+
+@app.post("/api/terjangkit/restore-json", dependencies=[Depends(verify_admin_key)])
+async def restore_terjangkit_json(file: UploadFile = File(...)):
+    """Memulihkan seluruh periode dari file backup negara_terjangkit.json."""
+    try:
+        raw = await file.read()
+        data = json.loads(raw.decode("utf-8"))
+        if not isinstance(data, dict) or "periods" not in data or not isinstance(data["periods"], dict):
+            raise HTTPException(status_code=400, detail="Format file JSON tidak valid (harus memiliki key 'periods').")
+        save_terjangkit_store(data)
+        return {
+            "status": "success",
+            "message": f"Berhasil memulihkan {len(data['periods'])} periode dari backup JSON."
+        }
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="File bukan format JSON yang valid.")
 
 @app.get("/api/sync")
 def sync_data(background_tasks: BackgroundTasks):
