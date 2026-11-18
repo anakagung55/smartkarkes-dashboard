@@ -315,9 +315,9 @@ app = FastAPI(
 
 # Batasi CORS hanya untuk domain resmi SIVERA & localhost development
 ALLOWED_ORIGINS = [
+    "https://si-vera.netlify.app",
     "https://si-vera.id",
     "https://www.si-vera.id",
-    "https://harmonious-crumble-7a2144.netlify.app",
     "http://127.0.0.1:5500",
     "http://localhost:5500",
 ]
