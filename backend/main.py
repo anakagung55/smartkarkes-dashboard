@@ -413,6 +413,11 @@ def health_check():
     """Endpoint ringan untuk UptimeRobot ping agar Render tidak sleep."""
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
+@app.post("/api/verify-pin", dependencies=[Depends(verify_admin_key)])
+def verify_admin_pin():
+    """Memverifikasi PIN petugas sebelum membuka halaman kelola data."""
+    return {"status": "ok", "message": "Otorisasi berhasil."}
+
 
 class ManualTerjangkitRequest(BaseModel):
     periode: str = Field(..., pattern=r"^\d{4}-\d{2}$")
