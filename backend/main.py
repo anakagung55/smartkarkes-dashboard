@@ -313,12 +313,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Batasi CORS hanya untuk domain resmi SIVERA & localhost development
 ALLOWED_ORIGINS = [
+    "https://si-vera.vercel.app",
     "https://si-vera.netlify.app",
     "https://si-vera.id",
     "https://www.si-vera.id",
     "http://127.0.0.1:5500",
+    "http://localhost:5500",
 ]
 
 app.add_middleware(
