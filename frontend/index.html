@@ -47,40 +47,69 @@
     </div>
     
     <!-- Header Utama SIVERA (Sticky hanya pada navbar utama agar hemat layar di HP) -->
+    <!-- Header Utama SIVERA -->
     <header class="sticky top-0 z-50 bg-gradient-to-r from-teal-950 via-teal-950 to-teal-900 text-white border-b border-teal-800/80 shadow-md">
         <!-- Top Slim Progress Indicator -->
         <div id="top-loading-bar" class="h-0.5 w-full bg-teal-950 overflow-hidden hidden">
             <div class="h-full w-1/3 bg-teal-400 loading-bar-active"></div>
         </div>
 
-        <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 flex flex-col lg:flex-row items-center justify-between gap-3">
-            <!-- SIVERA Brand Logo (Pill Badge menyatu dengan aksen ring hijau) -->
-            <a href="index.html" class="flex flex-col sm:flex-row items-center gap-2 sm:gap-3.5 w-full lg:w-auto justify-center lg:justify-start group">
-                <div class="bg-white/95 group-hover:bg-white px-4 h-9 sm:h-10 rounded-full shadow-sm ring-2 ring-teal-400/20 overflow-hidden flex items-center justify-center shrink-0 transition-all">
+        <div class="max-w-7xl mx-auto py-2.5 sm:py-3 px-4 sm:px-6 flex items-center justify-between gap-3">
+            <!-- KIRI: SIVERA Brand Logo -->
+            <a href="index.html" class="flex items-center gap-3 sm:gap-3.5 group min-w-0">
+                <div class="bg-white/95 group-hover:bg-white px-3.5 sm:px-4 h-9 sm:h-10 rounded-full shadow-sm ring-2 ring-teal-400/20 overflow-hidden flex items-center justify-center shrink-0 transition-all">
                     <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-20 sm:h-24 w-auto object-contain select-none">
                 </div>
-                <div class="hidden sm:block h-7 w-px bg-teal-700/70 shrink-0"></div>
-                <p class="text-[11px] font-medium text-teal-100/90 leading-snug tracking-wide text-center sm:text-left max-w-xs">
+                <div class="hidden md:block h-7 w-px bg-teal-700/70 shrink-0"></div>
+                <p class="hidden md:block text-[11px] font-medium text-teal-100/90 leading-snug tracking-wide max-w-xs">
                     Sistem Interpretasi Verifikasi Status Merah berdasarkan Riwayat Kedatangan
                 </p>
             </a>
 
-            <!-- Action Navigation -->
-            <div class="flex flex-wrap items-center justify-center gap-2 w-full lg:w-auto">
-                <a href="dashboard.html" target="_blank" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 sm:py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
+            <!-- KANAN (DESKTOP): 3 Menu Sejajar -->
+            <div class="hidden lg:flex items-center gap-2">
+                <a href="dashboard.html" target="_blank" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
                     <span>Dashboard PPLN Merah</span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-75"></i>
                 </a>
-                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 sm:py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
+                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
                     <i class="fa-solid fa-globe text-amber-300"></i>
                     <span>Negara Terjangkit</span>
                 </a>
-                <button id="btn-sync" onclick="syncDataFromServer()" class="text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-1.5 sm:py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer" title="Sinkronisasi ulang data dari Google Sheets">
+                <button id="btn-sync" onclick="syncDataFromServer()" class="text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer" title="Sinkronisasi ulang data dari Google Sheets">
                     <i id="icon-sync" class="fas fa-sync-alt text-teal-700"></i>
                     <span>Sync Data</span>
                 </button>
             </div>
+
+            <!-- KANAN (MOBILE & TABLET): Tombol Burger Menu -->
+            <button type="button" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-expanded="false" aria-label="Buka menu navigasi"
+                class="lg:hidden w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-colors shrink-0">
+                <i id="mobile-menu-icon" class="fa-solid fa-bars text-base"></i>
+            </button>
+        </div>
+
+        <!-- DROPDOWN MENU MOBILE (Berisi 3 Aksi Utama) -->
+        <div id="mobile-menu-dropdown" class="hidden lg:hidden border-t border-teal-800/80 bg-teal-950/95 backdrop-blur-sm px-4 py-3 space-y-2 shadow-lg">
+            <a href="dashboard.html" target="_blank" onclick="closeMobileMenu()" class="w-full text-xs bg-white/10 hover:bg-white/15 text-white px-3.5 py-2.5 rounded-lg font-medium transition-colors border border-white/10 flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+                    <span>Dashboard PPLN Merah</span>
+                </span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-75"></i>
+            </a>
+            <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" onclick="closeMobileMenu()" class="w-full text-xs bg-white/10 hover:bg-white/15 text-white px-3.5 py-2.5 rounded-lg font-medium transition-colors border border-white/10 flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-globe text-amber-300"></i>
+                    <span>Negara Terjangkit</span>
+                </span>
+                <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
+            </a>
+            <button type="button" onclick="closeMobileMenu(); syncDataFromServer();" class="w-full text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-2.5 rounded-lg font-bold transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                <i id="icon-sync-mobile" class="fas fa-sync-alt text-teal-700"></i>
+                <span>Sync Data</span>
+            </button>
         </div>
     </header>
 
@@ -648,7 +677,7 @@
     </main>
 
     <script>
-    const API_BASE = 'https://smartkarkes-dashboard.onrender.com';
+    const API_BASE = 'http://127.0.0.1:8000';
 
     let state = {
         dataLanding: null,
@@ -684,6 +713,39 @@
         const btn = document.getElementById('looker-date-btn');
         if (popup && btn && !popup.contains(e.target) && !btn.contains(e.target)) {
             popup.classList.remove('active');
+        }
+    });
+
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu-dropdown');
+        const icon = document.getElementById('mobile-menu-icon');
+        const btn = document.getElementById('mobile-menu-btn');
+        const isHidden = menu.classList.contains('hidden');
+
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            icon.className = 'fa-solid fa-xmark text-base';
+            btn.setAttribute('aria-expanded', 'true');
+        } else {
+            closeMobileMenu();
+        }
+    }
+
+    function closeMobileMenu() {
+        const menu = document.getElementById('mobile-menu-dropdown');
+        const icon = document.getElementById('mobile-menu-icon');
+        const btn = document.getElementById('mobile-menu-btn');
+        if (!menu) return;
+        menu.classList.add('hidden');
+        icon.className = 'fa-solid fa-bars text-base';
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    // Tutup burger menu otomatis jika klik di luar header
+    document.addEventListener('click', (e) => {
+        const header = document.querySelector('header');
+        if (header && !header.contains(e.target)) {
+            closeMobileMenu();
         }
     });
 
@@ -842,7 +904,9 @@
     async function syncDataFromServer() {
         showLoading(true);
         const iconSync = document.getElementById('icon-sync');
+        const iconSyncMobile = document.getElementById('icon-sync-mobile');
         if (iconSync) iconSync.classList.add('fa-spin');
+        if (iconSyncMobile) iconSyncMobile.classList.add('fa-spin');
         try {
             await fetch(`${API_BASE}/api/sync`);
             await applyGlobalFilters();
@@ -851,6 +915,7 @@
             showToast("Gagal sinkronisasi data dari server.", "error");
         }
         if (iconSync) iconSync.classList.remove('fa-spin');
+        if (iconSyncMobile) iconSyncMobile.classList.remove('fa-spin');
         showLoading(false);
     }
     

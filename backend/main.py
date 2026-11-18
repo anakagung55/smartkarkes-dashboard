@@ -407,6 +407,9 @@ def extract_valid_countries(raw_str: str, valid_countries: set, country_alias_ma
             res.append(c)
     return res
 
+@app.get("/")
+def root():
+    return {"service": "Backend SIVERA", "status": "running"}
 
 @app.get("/api/health")
 def health_check():

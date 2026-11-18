@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SI-VERA — Kelola Daftar Negara Terjangkit Bulanan</title>
+    <title>SIVERA — Kelola Daftar Negara Terjangkit</title>
     <link rel="icon" type="image/png" href="assets/favicon-sivera.png">
+    <link rel="apple-touch-icon" href="assets/favicon-sivera.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
@@ -23,63 +24,64 @@
 <body class="bg-slate-50 min-h-screen flex flex-col antialiased text-slate-800">
 
     <!-- Toast Notification -->
-    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md">
+    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md pointer-events-none">
         <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium bg-white">
             <i id="toast-icon" class="fa-solid text-lg"></i>
             <span id="toast-message" class="text-slate-800">Notifikasi...</span>
         </div>
     </div>
 
-    <!-- LOGIN GATE (MUNCUL DI AWAL SEBELUM AKSES KELOLA DATA) -->
+    <!-- LOGIN GATE -->
     <div id="login-gate-screen" class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-teal-950 via-teal-900 to-slate-900 p-4">
         <div class="max-w-md w-full mx-auto my-auto">
             <div class="bg-white rounded-2xl shadow-2xl border border-slate-200/80 overflow-hidden">
-                <div class="bg-teal-900 px-6 py-6 text-center border-b border-teal-800">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 text-teal-300 flex items-center justify-center text-xl mx-auto mb-3 shadow-inner">
-                        <i class="fa-solid fa-shield-halved"></i>
+                <!-- Header Kartu dengan Logo SIVERA -->
+                <div class="bg-teal-900 px-6 py-6 text-center border-b border-teal-800 flex flex-col items-center">
+                    <div class="bg-white/95 px-5 h-11 rounded-full shadow-sm ring-2 ring-teal-400/25 overflow-hidden flex items-center justify-center">
+                        <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-24 w-auto object-contain select-none">
                     </div>
-                    <h1 class="text-xl font-extrabold tracking-tight text-white">SI-VERA</h1>
-                    <p class="text-xs text-teal-200 mt-1">Portal Master Data Negara Terjangkit — BBKK Denpasar</p>
+                    <p class="text-xs text-teal-200 mt-3">Manajemen Data Negara Terjangkit</p>
                 </div>
 
-                <form onsubmit="handleLoginSubmit(event)" class="p-6 space-y-4">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900">Login Petugas Berwenang</h2>
+                <!-- Form Login Rata Tengah -->
+                <form onsubmit="handleLoginSubmit(event)" class="p-6 sm:p-7 space-y-5">
+                    <div class="text-center max-w-xs mx-auto">
+                        <h1 class="text-lg font-bold text-slate-900">Masuk ke Panel Data</h1>
                         <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Halaman ini khusus untuk petugas kekarantinaan kesehatan. Masukkan kode otorisasi untuk mengelola data.
+                            Masukkan kode akses untuk mengelola daftar negara terjangkit.
                         </p>
                     </div>
 
                     <div>
-                        <label for="login-pin-input" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                            Kode Otorisasi / PIN Petugas
+                        <label for="login-pin-input" class="block text-xs font-semibold text-slate-700 text-center mb-2">
+                            Kode Akses
                         </label>
                         <div class="relative">
                             <span class="absolute left-3.5 top-3 text-slate-400 text-sm">
                                 <i class="fa-solid fa-key"></i>
                             </span>
                             <input type="password" id="login-pin-input" required autocomplete="current-password"
-                                placeholder="Masukkan kode otorisasi..."
-                                class="w-full pl-10 pr-10 py-2.5 text-sm border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 outline-none font-semibold tracking-wider text-slate-900">
-                            <button type="button" onclick="toggleLoginPinVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-1 text-xs" title="Tampilkan/Sembunyikan PIN">
+                                placeholder="Masukkan kode akses"
+                                class="w-full pl-10 pr-10 py-2.5 text-sm text-center border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 outline-none font-semibold tracking-wider text-slate-900">
+                            <button type="button" onclick="toggleLoginPinVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-1 text-xs" title="Tampilkan kode">
                                 <i id="eye-pin-icon" class="fa-regular fa-eye"></i>
                             </button>
                         </div>
-                        <p id="login-error-msg" class="hidden text-xs text-rose-600 font-semibold mt-2 flex items-center gap-1.5">
+                        <p id="login-error-msg" class="hidden text-xs text-rose-600 font-semibold mt-2 flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-circle-exclamation"></i>
-                            <span>Kode otorisasi tidak valid.</span>
+                            <span>Kode akses salah.</span>
                         </p>
                     </div>
 
                     <button type="submit" id="btn-login-submit" class="w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-right-to-bracket"></i>
-                        <span>Masuk ke Halaman Kelola Data</span>
+                        <span>Masuk</span>
                     </button>
 
                     <div class="pt-3 border-t border-slate-100 text-center">
-                        <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 transition-colors">
-                            <i class="fa-solid fa-arrow-left"></i>
-                            <span>Kembali ke Portal Utama (Publik)</span>
+                        <a href="index.html" class="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 transition-colors">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            <span>Kembali ke Beranda</span>
                         </a>
                     </div>
                 </form>
@@ -87,58 +89,57 @@
         </div>
 
         <p class="text-center text-[11px] text-teal-200/70 py-3">
-            Balai Besar Kekarantinaan Kesehatan (BBKK) Denpasar
+            SIVERA &bull; Sistem Interpretasi Verifikasi Status Merah
         </p>
     </div>
 
-    <!-- KONTEN UTAMA KELOLA DATA (TERSEMBUNYI SAMPAI LOGIN BERHASIL) -->
+    <!-- KONTEN UTAMA KELOLA DATA -->
     <div id="protected-app-container" class="hidden min-h-screen flex-col">
 
-        <!-- MODAL KONFIRMASI HAPUS PERIODE -->
-        <div id="modal-confirm-delete" class="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] z-50 hidden items-center justify-center p-4">
+        <!-- MODAL KONFIRMASI DINAMIS (HAPUS PERIODE & HAPUS NEGARA) -->
+        <div id="modal-confirm-delete" class="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] z-50 hidden items-center justify-center p-4" onclick="if(event.target === this) closeDeleteModal()">
             <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
                 <div class="flex items-start gap-3.5">
-                    <div class="w-11 h-11 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-lg flex-shrink-0">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div class="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center text-base flex-shrink-0">
+                        <i class="fa-solid fa-trash-can"></i>
                     </div>
                     <div>
-                        <h3 class="text-base font-bold text-slate-900">Hapus Periode Terjangkit?</h3>
+                        <h3 class="text-base font-bold text-slate-900" id="modal-delete-title">Konfirmasi Hapus</h3>
                         <p class="text-xs text-slate-600 mt-1.5 leading-relaxed" id="modal-delete-desc">
-                            Apakah Anda yakin ingin menghapus periode ini?
+                            Apakah Anda yakin ingin menghapus data ini?
                         </p>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-                    <button type="button" onclick="closeDeletePeriodModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors">
                         Batal
                     </button>
-                    <button type="button" id="btn-confirm-delete-exec" onclick="executeDeletePeriod()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs flex items-center gap-1.5">
-                        <i class="fa-solid fa-trash-can"></i> Ya, Hapus Periode
+                    <button type="button" id="btn-confirm-delete-exec" onclick="executeConfirmedDelete()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <span id="btn-confirm-delete-label">Ya, Hapus</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- HEADER SI-VERA -->
-        <header class="bg-teal-900 text-white shadow-sm sticky top-0 z-40 border-b border-teal-800/80">
-            <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-teal-300 text-lg flex-shrink-0 shadow-inner">
-                        <i class="fa-solid fa-shield-halved"></i>
+        <!-- HEADER SIVERA DENGAN LOGO -->
+        <header class="bg-gradient-to-r from-teal-950 via-teal-950 to-teal-900 text-white shadow-md sticky top-0 z-40 border-b border-teal-800/80">
+            <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="bg-white/95 group-hover:bg-white px-4 h-9 sm:h-10 rounded-full shadow-sm ring-2 ring-teal-400/20 overflow-hidden flex items-center justify-center shrink-0 transition-all">
+                        <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-20 sm:h-24 w-auto object-contain select-none">
                     </div>
+                    <div class="h-6 w-px bg-teal-700/70 shrink-0"></div>
                     <div>
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white leading-none">SI-VERA</h1>
-                            <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-teal-800 text-teal-200 rounded border border-teal-700">Master Data</span>
-                        </div>
-                        <p class="text-[11px] text-teal-200/90 mt-1 leading-tight">Kelola Daftar Negara Terjangkit (WHO / Kemenkes) — BBKK Denpasar</p>
+                        <span class="inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-teal-800 text-teal-200 rounded border border-teal-700">Master Data</span>
+                        <p class="text-[11px] text-teal-100/90 mt-0.5 leading-tight">Kelola Daftar Negara Terjangkit Bulanan</p>
                     </div>
-                </div>
+                </a>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <a href="index.html" class="text-xs bg-white text-teal-900 hover:bg-teal-50 px-3.5 py-2 rounded-lg font-semibold transition-colors shadow-xs flex items-center gap-1.5">
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end">
+                    <a href="index.html" class="text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-2 rounded-lg font-semibold transition-colors shadow-xs flex items-center gap-1.5">
                         <i class="fa-solid fa-arrow-left"></i>
-                        <span>Portal Utama</span>
+                        <span>Beranda</span>
                     </a>
                     <button type="button" onclick="logoutAdminSession()" class="text-xs bg-rose-600/90 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-semibold transition-colors flex items-center gap-1.5" title="Keluar & kunci halaman ini">
                         <i class="fa-solid fa-right-from-bracket"></i>
@@ -172,8 +173,8 @@
                     <div class="flex items-start gap-3">
                         <span class="w-7 h-7 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
                         <div>
-                            <h2 class="text-base font-bold text-slate-800">Pilih Periode Acuan (Bulan & Tahun)</h2>
-                            <p class="text-xs text-slate-500 mt-0.5">Data yang diunggah atau diinput akan tersimpan sesuai periode bulan yang dipilih.</p>
+                            <h2 class="text-base font-bold text-slate-800">Pilih Periode (Bulan & Tahun)</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Data yang diunggah atau diinput tersimpan sesuai bulan yang dipilih.</p>
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
@@ -236,14 +237,14 @@
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2.5">
                                 <span class="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center text-xs"><i class="fa-solid fa-file-excel"></i></span>
-                                <span>Upload File Excel Pusat (.xlsx)</span>
+                                <span>Upload File Excel (.xlsx)</span>
                             </h3>
                             <button onclick="downloadTemplateExcel()" class="text-xs text-teal-700 hover:text-teal-900 font-semibold hover:underline flex items-center gap-1.5 bg-teal-50/70 px-2.5 py-1 rounded-lg border border-teal-200/70">
                                 <i class="fa-solid fa-download text-[11px]"></i>
                                 <span>Unduh Template</span>
                             </button>
                         </div>
-                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">Unggah atau tarik & lepas (<i>drag & drop</i>) file resmi <i>Daftar Negara Terjangkit</i> bulanan dari pusat. Sistem otomatis membaca kolom <strong class="text-slate-700">Nama Negara</strong> dan <strong class="text-slate-700">Penyakit</strong>.</p>
+                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">Unggah atau tarik file Excel daftar negara terjangkit. Sistem membaca kolom <strong class="text-slate-700">Nama Negara</strong> dan <strong class="text-slate-700">Penyakit</strong> secara otomatis.</p>
 
                         <div class="space-y-3.5">
                             <div id="drop-zone" class="border-2 border-dashed border-slate-300 hover:border-teal-600 rounded-xl p-5 text-center bg-slate-50/60 hover:bg-teal-50/30 transition-all cursor-pointer">
@@ -254,9 +255,9 @@
                                     </div>
                                     <div class="text-xs text-slate-700 font-medium">
                                         <span class="inline-block px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-lg mr-1.5 transition-colors">Pilih File</span>
-                                        atau tarik & lepas file ke kotak ini
+                                        atau tarik & lepas file ke sini
                                     </div>
-                                    <p class="text-[11px] text-slate-400">Mendukung format .xlsx, .xls, atau .csv (Maks. 2 MB)</p>
+                                    <p class="text-[11px] text-slate-400">Format .xlsx, .xls, atau .csv (Maks. 2 MB)</p>
                                 </div>
                             </div>
 
@@ -267,7 +268,7 @@
                                             <i class="fa-solid fa-check"></i>
                                         </span>
                                         <div class="min-w-0">
-                                            <p class="text-xs font-bold text-emerald-950">File berhasil dimuat & siap disimpan</p>
+                                            <p class="text-xs font-bold text-emerald-950">File siap disimpan</p>
                                             <p class="text-[11px] text-slate-600 truncate" id="preview-file-name">-</p>
                                         </div>
                                     </div>
@@ -286,7 +287,7 @@
 
                                 <div class="bg-white rounded-lg border border-slate-200/80 overflow-hidden">
                                     <div class="px-2.5 py-1.5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pratinjau Data Terbaca</span>
+                                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pratinjau Data</span>
                                         <span class="text-[10px] text-slate-400" id="preview-table-note">Menampilkan 5 data teratas</span>
                                     </div>
                                     <div class="max-h-32 overflow-y-auto custom-scroll">
@@ -327,7 +328,7 @@
                             <span class="w-7 h-7 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-xs"><i class="fa-solid fa-pen-to-square"></i></span>
                             <span>Tambah / Update Negara Manual</span>
                         </h3>
-                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">Gunakan form ini untuk menambah 1–2 negara baru atau memperbarui status penyakit jika ada surat edaran susulan di tengah bulan.</p>
+                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">Tambahkan negara baru atau perbarui status penyakit secara satuan.</p>
 
                         <div class="space-y-3.5">
                             <div>
@@ -377,7 +378,7 @@
                                 Daftar Negara Terjangkit — <span id="label-periode-aktif" class="text-teal-700">September 2026</span>
                             </h3>
                             <p class="text-[11px] text-slate-500 mt-0.5">
-                                Total: <strong class="text-slate-700" id="total-negara-aktif">0</strong> negara &bull; Terakhir diperbarui: <strong class="text-slate-700" id="info-updated-at">-</strong> (<span id="info-source">-</span>)
+                                Total: <strong class="text-slate-700" id="total-negara-aktif">0</strong> negara &bull; Diperbarui: <strong class="text-slate-700" id="info-updated-at">-</strong> (<span id="info-source">-</span>)
                             </p>
                         </div>
                     </div>
@@ -412,15 +413,15 @@
 
         </main>
 
-        <!-- Footer Resmi -->
+        <!-- Footer -->
         <footer class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-5 mt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-            <p><strong class="text-slate-700">SI-VERA</strong> — Sistem Informasi Verifikasi & Pemantauan PPLN</p>
-            <p>Balai Besar Kekarantinaan Kesehatan (BBKK) Denpasar</p>
+            <p><strong class="text-slate-700">SIVERA</strong> — Sistem Interpretasi Verifikasi Status Merah berdasarkan Riwayat Kedatangan</p>
+            <p>Manajemen Data Negara Terjangkit</p>
         </footer>
     </div>
 
     <script>
-        const API_BASE = "https://smartkarkes-dashboard.onrender.com";
+        const API_BASE = "http://127.0.0.1:8000";
         const STORAGE_KEY_PERIODE = "terjangkit_active_periode";
         const STORAGE_KEY_UPLOAD_BANNER = "terjangkit_upload_success_banner";
         const STORAGE_KEY_HIDDEN_PERIODS = "terjangkit_hidden_empty_periods";
@@ -476,7 +477,7 @@
 
         function logoutAdminSession() {
             lockProtectedApp();
-            showToast("Anda telah keluar dari sesi petugas.", "success");
+            showToast("Sesi berakhir.", "success");
         }
 
         async function verifyPinWithServer(pin) {
@@ -511,19 +512,18 @@
 
                 sessionStorage.setItem(STORAGE_KEY_ADMIN_PIN, pin);
                 unlockProtectedApp();
-                showToast("Login berhasil. Selamat bertugas!", "success");
             } catch (err) {
-                showToast("Server sedang bersiap (cold start), coba klik Masuk sekali lagi.", "error");
+                showToast("Server belum siap, silakan coba lagi.", "error");
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Masuk ke Halaman Kelola Data</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Masuk</span>`;
             }
         }
 
         function handleUnauthorizedResponse() {
             lockProtectedApp();
             const errMsg = document.getElementById("login-error-msg");
-            errMsg.querySelector("span").textContent = "Sesi kadaluarsa atau PIN tidak valid. Silakan login ulang.";
+            errMsg.querySelector("span").textContent = "Sesi berakhir. Silakan masuk ulang.";
             errMsg.classList.remove("hidden");
         }
 
@@ -586,6 +586,7 @@
         let currentAvailablePeriods = [];
         let selectedUploadFile = null;
         let uploadListenersInitialized = false;
+        let pendingDeleteAction = null;
 
         function formatPeriodeIndo(ym) {
             if (!ym || !ym.includes("-")) return ym;
@@ -640,14 +641,6 @@
             }
         }
 
-        function markPeriodHiddenIfEmpty(ym) {
-            const list = getHiddenEmptyPeriods();
-            if (!list.includes(ym)) {
-                list.push(ym);
-                localStorage.setItem(STORAGE_KEY_HIDDEN_PERIODS, JSON.stringify(list));
-            }
-        }
-
         function unmarkPeriodHidden(ym) {
             const list = getHiddenEmptyPeriods().filter(p => p !== ym);
             localStorage.setItem(STORAGE_KEY_HIDDEN_PERIODS, JSON.stringify(list));
@@ -657,9 +650,9 @@
             if (!info) return;
             const banner = document.getElementById("upload-success-banner");
             document.getElementById("banner-success-title").textContent =
-                `Berhasil Diunggah & Disimpan ke Periode ${info.periodeLabel}!`;
+                `Berhasil Disimpan ke Periode ${info.periodeLabel}!`;
             document.getElementById("banner-success-desc").innerHTML =
-                `File <strong>${escapeHTML(info.fileName)}</strong> telah berhasil diproses pada pukul <strong>${escapeHTML(info.timestamp)}</strong>. ${info.detail || ""}`;
+                `File <strong>${escapeHTML(info.fileName)}</strong> diproses pada pukul <strong>${escapeHTML(info.timestamp)}</strong>. ${info.detail || ""}`;
             banner.classList.remove("hidden");
         }
 
@@ -827,9 +820,9 @@
                         : `Menampilkan semua (${parsedRows.length}) baris`;
 
                 document.getElementById("file-preview-box").classList.remove("hidden");
-                showToast(`File "${file.name}" berhasil dimuat (${uniqueCountries.size} negara unik).`, "success");
+                showToast(`File "${file.name}" dimuat (${uniqueCountries.size} negara unik).`, "success");
             } catch (err) {
-                showToast("Gagal membaca pratinjau file Excel. Pastikan format sesuai.", "error");
+                showToast("Gagal membaca pratinjau file Excel.", "error");
             }
         }
 
@@ -875,7 +868,7 @@
                 } else {
                     currentItems = [];
                     document.getElementById("info-updated-at").textContent = "Belum ada data";
-                    document.getElementById("info-source").textContent = "Silakan upload Excel atau tambah manual";
+                    document.getElementById("info-source").textContent = "Belum ada sumber data";
                     btnDeletePeriod.disabled = true;
                     btnDeletePeriod.classList.add("opacity-50", "cursor-not-allowed");
                 }
@@ -885,7 +878,7 @@
                 populateDatalistNegara(data.known_countries || []);
                 renderTable(currentItems);
             } catch (err) {
-                showToast("Gagal terhubung ke server backend.", "error");
+                showToast("Gagal terhubung ke server.", "error");
             }
         }
 
@@ -893,6 +886,43 @@
             const periode = getSelectedPeriode();
             saveActivePeriode(periode);
             fetchTerjangkitData(periode);
+        }
+
+        /* --- MODAL KONFIRMASI DINAMIS (HAPUS PERIODE & HAPUS NEGARA) --- */
+        function openDeleteModal({ title, descHtml, confirmLabel, onConfirm }) {
+            document.getElementById("modal-delete-title").textContent = title;
+            document.getElementById("modal-delete-desc").innerHTML = descHtml;
+            document.getElementById("btn-confirm-delete-label").textContent = confirmLabel;
+            pendingDeleteAction = onConfirm;
+
+            const modal = document.getElementById("modal-confirm-delete");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteAction = null;
+            const modal = document.getElementById("modal-confirm-delete");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        async function executeConfirmedDelete() {
+            if (!pendingDeleteAction) return;
+            const action = pendingDeleteAction;
+            const btnExec = document.getElementById("btn-confirm-delete-exec");
+            const labelEl = document.getElementById("btn-confirm-delete-label");
+            const origLabel = labelEl.textContent;
+
+            btnExec.disabled = true;
+            labelEl.textContent = "Menghapus...";
+
+            try {
+                await action();
+            } finally {
+                btnExec.disabled = false;
+                labelEl.textContent = origLabel;
+            }
         }
 
         function openDeletePeriodModal() {
@@ -906,56 +936,77 @@
             }
 
             const jumlah = foundPeriod ? foundPeriod.count : currentItems.length;
-            document.getElementById("modal-delete-desc").innerHTML =
-                `Apakah Anda yakin ingin menghapus periode <strong>${escapeHTML(labelIndo)}</strong> (${jumlah} negara)?<br>Data akan langsung dihapus dari daftar <strong>Periode Tersimpan</strong>.`;
+            openDeleteModal({
+                title: "Hapus Periode Terjangkit?",
+                descHtml: `Hapus periode <strong>${escapeHTML(labelIndo)}</strong> (${jumlah} negara) dari daftar tersimpan?`,
+                confirmLabel: "Ya, Hapus Periode",
+                onConfirm: async () => {
+                    try {
+                        const url = new URL(`${API_BASE}/api/terjangkit/periode`);
+                        url.searchParams.append("periode", periode);
+                        const res = await fetch(url, {
+                            method: "DELETE",
+                            headers: { "X-Admin-Key": getAdminPin() }
+                        });
 
-            const modal = document.getElementById("modal-confirm-delete");
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
+                        if (!res.ok) {
+                            if (res.status === 401) {
+                                closeDeleteModal();
+                                handleUnauthorizedResponse();
+                                return;
+                            }
+                            const errData = await res.json();
+                            throw new Error(errData.detail || "Gagal menghapus periode.");
+                        }
+
+                        closeDeleteModal();
+                        clearActivePeriode();
+                        showToast(`Periode ${labelIndo} berhasil dihapus.`, "success");
+                        await fetchTerjangkitData(null);
+                    } catch (err) {
+                        showToast(err.message, "error");
+                    }
+                }
+            });
         }
 
-        function closeDeletePeriodModal() {
-            const modal = document.getElementById("modal-confirm-delete");
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
-        }
-
-        async function executeDeletePeriod() {
+        function openDeleteCountryModal(negara) {
             const periode = getSelectedPeriode();
             const labelIndo = formatPeriodeIndo(periode);
-            const btnExec = document.getElementById("btn-confirm-delete-exec");
 
-            btnExec.disabled = true;
-            btnExec.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghapus...`;
+            openDeleteModal({
+                title: "Hapus Negara?",
+                descHtml: `Hapus <strong>${escapeHTML(negara)}</strong> dari daftar periode <strong>${escapeHTML(labelIndo)}</strong>?`,
+                confirmLabel: "Ya, Hapus",
+                onConfirm: async () => {
+                    saveActivePeriode(periode);
+                    try {
+                        const url = new URL(`${API_BASE}/api/terjangkit/manual`);
+                        url.searchParams.append("periode", periode);
+                        url.searchParams.append("negara", negara);
 
-            try {
-                const url = new URL(`${API_BASE}/api/terjangkit/periode`);
-                url.searchParams.append("periode", periode);
-                const res = await fetch(url, {
-                    method: "DELETE",
-                    headers: { "X-Admin-Key": getAdminPin() }
-                });
+                        const res = await fetch(url, {
+                            method: "DELETE",
+                            headers: { "X-Admin-Key": getAdminPin() }
+                        });
+                        const result = await res.json();
+                        if (!res.ok) {
+                            if (res.status === 401) {
+                                closeDeleteModal();
+                                handleUnauthorizedResponse();
+                                return;
+                            }
+                            throw new Error(result.detail || "Gagal menghapus data.");
+                        }
 
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        closeDeletePeriodModal();
-                        handleUnauthorizedResponse();
-                        return;
+                        closeDeleteModal();
+                        showToast(result.message, "success");
+                        fetchTerjangkitData(periode);
+                    } catch (err) {
+                        showToast(err.message, "error");
                     }
-                    const errData = await res.json();
-                    throw new Error(errData.detail || "Gagal menghapus periode.");
                 }
-
-                closeDeletePeriodModal();
-                clearActivePeriode();
-                showToast(`Periode ${labelIndo} berhasil dihapus dari daftar tersimpan!`, "success");
-                await fetchTerjangkitData(null);
-            } catch (err) {
-                showToast(err.message, "error");
-            } finally {
-                btnExec.disabled = false;
-                btnExec.innerHTML = `<i class="fa-solid fa-trash-can"></i> Ya, Hapus Periode`;
-            }
+            });
         }
 
         function renderSavedPeriods(periodsList, activePeriode) {
@@ -1013,7 +1064,7 @@
                         </span>
                     </td>
                     <td class="py-2.5 px-4 text-center">
-                        <button onclick="deleteCountry(this.dataset.negara)" data-negara="${escapeHTML(item.negara)}" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 rounded-md text-xs font-semibold transition-colors" title="Hapus negara ini">
+                        <button onclick="openDeleteCountryModal(this.dataset.negara)" data-negara="${escapeHTML(item.negara)}" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/70 rounded-md text-xs font-semibold transition-colors" title="Hapus negara ini">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -1038,7 +1089,7 @@
             const fileToUpload = selectedUploadFile || (fileInput.files && fileInput.files[0]);
 
             if (!fileToUpload) {
-                showToast("Pilih atau tarik file Excel (.xlsx) terlebih dahulu.", "error");
+                showToast("Pilih file Excel (.xlsx) terlebih dahulu.", "error");
                 return;
             }
 
@@ -1061,7 +1112,7 @@
                 periode,
                 periodeLabel,
                 fileName: fileToUpload.name,
-                detail: `Mode pembaruan: <strong>${mode === "replace" ? "Timpa seluruh daftar" : "Gabungkan data"}</strong>.`,
+                detail: `Mode: <strong>${mode === "replace" ? "Timpa seluruh daftar" : "Gabungkan data"}</strong>.`,
                 timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
                 createdAt: Date.now()
             };
@@ -1089,7 +1140,7 @@
 
                 clearSelectedFile();
                 showUploadSuccessBanner(bannerPayload);
-                showToast(result.message || `Berhasil disimpan ke ${periodeLabel}!`, "success");
+                showToast(result.message || `Berhasil disimpan ke ${periodeLabel}.`, "success");
                 fetchTerjangkitData(periode);
             } catch (err) {
                 showToast(err.message, "error");
@@ -1145,37 +1196,6 @@
             }
         }
 
-        async function deleteCountry(negara) {
-            const periode = getSelectedPeriode();
-            if (!confirm(`Hapus "${negara}" dari daftar negara terjangkit periode ${formatPeriodeIndo(periode)}?`)) return;
-
-            saveActivePeriode(periode);
-
-            try {
-                const url = new URL(`${API_BASE}/api/terjangkit/manual`);
-                url.searchParams.append("periode", periode);
-                url.searchParams.append("negara", negara);
-
-                const res = await fetch(url, {
-                    method: "DELETE",
-                    headers: { "X-Admin-Key": getAdminPin() }
-                });
-                const result = await res.json();
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        handleUnauthorizedResponse();
-                        return;
-                    }
-                    throw new Error(result.detail || "Gagal menghapus data.");
-                }
-
-                showToast(result.message, "success");
-                fetchTerjangkitData(periode);
-            } catch (err) {
-                showToast(err.message, "error");
-            }
-        }
-
         async function copyFromPeriod() {
             const fromPeriode = document.getElementById("copy-source-periode").value;
             const toPeriode = getSelectedPeriode();
@@ -1217,12 +1237,12 @@
         }
 
         function downloadTemplateExcel() {
-            const wsKemenkes = XLSX.utils.aoa_to_sheet([
-                ["DAFTAR NEGARA TERJANGKIT - KEMENTERIAN KESEHATAN RI"],
-                ["Acuan Evaluasi Prioritas PPLN Bandara Internasional I Gusti Ngurah Rai"],
-                ["Petunjuk: Isi atau perbarui daftar negara dan penyakit pada sheet 'tabel' mulai baris ke-5 (kolom B, C, D)."]
+            const wsInfo = XLSX.utils.aoa_to_sheet([
+                ["DAFTAR NEGARA TERJANGKIT"],
+                ["Acuan Evaluasi Prioritas PPLN"],
+                ["Petunjuk: Isi daftar negara dan penyakit pada sheet 'tabel' mulai baris ke-5 (kolom B, C, D)."]
             ]);
-            wsKemenkes["!cols"] = [{ wch: 75 }];
+            wsInfo["!cols"] = [{ wch: 75 }];
 
             const aoaTabel = [
                 ["No.", "Nama Negara", "Penyakit"],
@@ -1237,10 +1257,10 @@
             ];
 
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, wsKemenkes, "Kemenkes");
+            XLSX.utils.book_append_sheet(wb, wsInfo, "Petunjuk");
             XLSX.utils.book_append_sheet(wb, wsTabel, "tabel");
             XLSX.writeFile(wb, "Template_Daftar_Negara_Terjangkit.xlsx");
-            showToast("Template Excel (format September 2026) berhasil diunduh!", "success");
+            showToast("Template Excel berhasil diunduh.", "success");
         }
 
         function exportCurrentToExcel() {

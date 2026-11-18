@@ -1,8 +1,8 @@
 {
   "periods": {
     "2026-09": {
-      "updated_at": "2026-11-12 17:49:40",
-      "source": "Upload Excel (V1.Daftar Negara Terjangkit_all indonesia_ september 2026.xlsx)",
+      "updated_at": "2026-11-19 01:43:08",
+      "source": "Update Manual Petugas BBKK",
       "countries": {
         "Cambodia": "Flu Burung",
         "Angola": "Yellow Fever",
