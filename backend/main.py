@@ -702,11 +702,13 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
             m_counts = df_year.groupby('trend_month').size() if not df_year.empty else pd.Series(dtype=int)
             return [int(m_counts.get(m, 0)) if min_m <= m <= max_m else None for m in range(1, 13)]
 
-        available_years = []
+        available_years_set = set()
         if 'trend_year' in df_merah.columns:
-            available_years = sorted([int(y) for y in df_merah['trend_year'].dropna().unique()], reverse=True)
-        if not available_years:
-            available_years = [2026, 2025]
+            available_years_set.update(int(y) for y in df_merah['trend_year'].dropna().unique())
+        if 'parsed_date' in df_landing.columns:
+            available_years_set.update(int(y) for y in df_landing['parsed_date'].dt.year.dropna().unique())
+
+        available_years = sorted(list(available_years_set), reverse=True) if available_years_set else [2026, 2025]
 
         tren_tahunan = {str(yr): build_yearly_trend(yr) for yr in available_years}
 
@@ -716,7 +718,14 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
             df_rincian = df_rincian[df_rincian[negara_col].astype(str).str.strip().str.lower() == negara.lower()]
 
         if 'parsed_date' in df_rincian.columns and 'Total Isian' in df_rincian.columns and 'Berisiko' in df_rincian.columns:
-            df_monthly = df_rincian.groupby(df_rincian['parsed_date'].dt.to_period('M')).agg({'Total Isian': 'sum', 'Berisiko': 'sum'}).reset_index()
+            df_valid_rincian = df_rincian.dropna(subset=['parsed_date']).copy()
+            df_monthly = (
+                df_valid_rincian
+                .groupby(df_valid_rincian['parsed_date'].dt.to_period('M'))
+                .agg({'Total Isian': 'sum', 'Berisiko': 'sum'})
+                .reset_index()
+                .sort_values(by='parsed_date', ascending=True)
+            )
             for _, row in df_monthly.iterrows():
                 p_date = row['parsed_date']
                 if pd.isna(p_date):

@@ -1,161 +1,174 @@
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIVERA - Sistem Interpretasi Verifikasi Status Merah berdasarkan Riwayat Kedatangan</title>
+    <title>SIVERA — Sistem Interpretasi Verifikasi Status Merah</title>
     <link rel="icon" type="image/png" href="assets/favicon-sivera.png">
+    <link rel="shortcut icon" type="image/png" href="assets/favicon-sivera.png">
     <link rel="apple-touch-icon" href="assets/favicon-sivera.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .tabular-nums { font-variant-numeric: tabular-nums; }
-        
-        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .looker-calendar-popup { display: none; position: absolute; top: 100%; right: 0; z-index: 50; background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.14); width: 640px; padding: 20px; margin-top: 8px; }
-        .looker-calendar-popup.active { display: block; }
-        
-        @media (max-width: 768px) {
-            .looker-calendar-popup { left: 0; right: auto; width: 92vw; padding: 14px; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
         }
-
-        @keyframes progressSlide {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(300%); }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .loading-bar-active {
-            animation: progressSlide 1.4s infinite ease-in-out;
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        #looker-calendar-popup {
+            display: none;
+        }
+        #looker-calendar-popup.active {
+            display: block;
         }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col relative antialiased">
+<body class="min-h-screen flex flex-col antialiased selection:bg-teal-100 selection:text-teal-900">
+
+    <!-- Top Loading Bar -->
+    <div id="top-loading-bar" class="fixed top-0 left-0 right-0 h-1 bg-teal-400 z-50 hidden animate-pulse"></div>
 
     <!-- Toast Notification -->
-    <div id="toast-notification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-md pointer-events-none">
-        <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium bg-white">
-            <i id="toast-icon" class="fa-solid text-base"></i>
-            <span id="toast-message" class="text-slate-800">Pesan notifikasi...</span>
+    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none">
+        <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium bg-white border-teal-200">
+            <i id="toast-icon" class="fa-solid fa-circle-check text-teal-600 text-base"></i>
+            <span id="toast-message" class="text-slate-700">Notifikasi</span>
         </div>
     </div>
-    
-    <!-- Header Utama SIVERA (Sticky hanya pada navbar utama agar hemat layar di HP) -->
-    <!-- Header Utama SIVERA -->
-    <header class="sticky top-0 z-50 bg-gradient-to-r from-teal-950 via-teal-950 to-teal-900 text-white border-b border-teal-800/80 shadow-md">
-        <!-- Top Slim Progress Indicator -->
-        <div id="top-loading-bar" class="h-0.5 w-full bg-teal-950 overflow-hidden hidden">
-            <div class="h-full w-1/3 bg-teal-400 loading-bar-active"></div>
-        </div>
 
-        <div class="max-w-7xl mx-auto py-2.5 sm:py-3 px-4 sm:px-6 flex items-center justify-between gap-3">
-            <!-- KIRI: SIVERA Brand Logo -->
-            <a href="index.html" class="flex items-center gap-3 sm:gap-3.5 group min-w-0">
-                <div class="bg-white/95 group-hover:bg-white px-3.5 sm:px-4 h-9 sm:h-10 rounded-full shadow-sm ring-2 ring-teal-400/20 overflow-hidden flex items-center justify-center shrink-0 transition-all">
-                    <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-20 sm:h-24 w-auto object-contain select-none">
-                </div>
-                <div class="hidden md:block h-7 w-px bg-teal-700/70 shrink-0"></div>
-                <p class="hidden md:block text-[11px] font-medium text-teal-100/90 leading-snug tracking-wide max-w-xs">
+    <!-- Header Navigation (Persis Prod) -->
+    <header class="bg-[#05443c] text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Kapsul Logo SIVERA -->
+                <a href="index.html" class="bg-white w-44 sm:w-48 h-10 sm:h-11 rounded-full shadow-xs flex items-center justify-center shrink-0 select-none overflow-hidden border border-teal-700/20 hover:opacity-95 transition-opacity">
+                    <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-full w-auto object-contain scale-[2.25]">
+                </a>
+                <div class="h-7 w-[1px] bg-teal-700/80 hidden sm:block"></div>
+                <p class="text-[11px] sm:text-xs text-teal-100/90 leading-snug max-w-xs hidden sm:block">
                     Sistem Interpretasi Verifikasi Status Merah berdasarkan Riwayat Kedatangan
                 </p>
-            </a>
+            </div>
 
-            <!-- KANAN (DESKTOP): 3 Menu Sejajar -->
-            <div class="hidden lg:flex items-center gap-2">
-                <a href="dashboard.html" target="_blank" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+            <!-- Desktop Actions -->
+            <div class="hidden md:flex items-center gap-2.5">
+                <a href="dashboard.html" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b5c51] hover:bg-[#0e6e61] text-white border border-teal-600/60 transition-colors">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
                     <span>Dashboard PPLN Merah</span>
-                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-75"></i>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-teal-200"></i>
                 </a>
-                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
-                    <i class="fa-solid fa-globe text-amber-300"></i>
+                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b5c51] hover:bg-[#0e6e61] text-white border border-teal-600/60 transition-colors">
+                    <i class="fa-solid fa-earth-asia text-amber-300"></i>
                     <span>Negara Terjangkit</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-teal-200"></i>
                 </a>
-                <button id="btn-sync" onclick="syncDataFromServer()" class="text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-2 rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer" title="Sinkronisasi ulang data dari Google Sheets">
-                    <i id="icon-sync" class="fas fa-sync-alt text-teal-700"></i>
+                <button onclick="syncDataFromServer()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white hover:bg-teal-50 text-[#05443c] shadow-xs transition-colors cursor-pointer">
+                    <i id="icon-sync" class="fa-solid fa-rotate text-[#05443c]"></i>
                     <span>Sync Data</span>
                 </button>
             </div>
 
-            <!-- KANAN (MOBILE & TABLET): Tombol Burger Menu -->
-            <button type="button" id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-expanded="false" aria-label="Buka menu navigasi"
-                class="lg:hidden w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-colors shrink-0">
-                <i id="mobile-menu-icon" class="fa-solid fa-bars text-base"></i>
-            </button>
+            <!-- Mobile Burger Button -->
+            <div class="md:hidden">
+                <button id="mobile-menu-btn" onclick="toggleMobileMenu()" aria-expanded="false" class="p-2 rounded-lg text-teal-100 hover:bg-teal-800 border border-teal-700">
+                    <i id="mobile-menu-icon" class="fa-solid fa-bars text-base"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- DROPDOWN MENU MOBILE (Berisi 3 Aksi Utama) -->
-        <div id="mobile-menu-dropdown" class="hidden lg:hidden border-t border-teal-800/80 bg-teal-950/95 backdrop-blur-sm px-4 py-3 space-y-2 shadow-lg">
-            <a href="dashboard.html" target="_blank" onclick="closeMobileMenu()" class="w-full text-xs bg-white/10 hover:bg-white/15 text-white px-3.5 py-2.5 rounded-lg font-medium transition-colors border border-white/10 flex items-center justify-between">
-                <span class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu-dropdown" class="hidden md:hidden bg-[#043831] border-t border-teal-800 px-4 py-3 space-y-2.5 shadow-md">
+            <div class="flex flex-col gap-2">
+                <a href="dashboard.html" class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#0b5c51] text-white border border-teal-700">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
                     <span>Dashboard PPLN Merah</span>
-                </span>
-                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-75"></i>
-            </a>
-            <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" onclick="closeMobileMenu()" class="w-full text-xs bg-white/10 hover:bg-white/15 text-white px-3.5 py-2.5 rounded-lg font-medium transition-colors border border-white/10 flex items-center justify-between">
-                <span class="flex items-center gap-2">
-                    <i class="fa-solid fa-globe text-amber-300"></i>
+                </a>
+                <a href="kelola-terjangkit.html" target="_blank" rel="noopener noreferrer" class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-[#0b5c51] text-white border border-teal-700">
+                    <i class="fa-solid fa-earth-asia text-amber-300"></i>
                     <span>Negara Terjangkit</span>
-                </span>
-                <i class="fa-solid fa-chevron-right text-[10px] opacity-60"></i>
-            </a>
-            <button type="button" onclick="closeMobileMenu(); syncDataFromServer();" class="w-full text-xs bg-white text-teal-950 hover:bg-teal-50 px-3.5 py-2.5 rounded-lg font-bold transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer">
-                <i id="icon-sync-mobile" class="fas fa-sync-alt text-teal-700"></i>
-                <span>Sync Data</span>
-            </button>
+                </a>
+                <button onclick="syncDataFromServer(); closeMobileMenu();" class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-white text-[#05443c]">
+                    <i id="icon-sync-mobile" class="fa-solid fa-rotate text-[#05443c]"></i>
+                    <span>Sync Data</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Konten Utama -->
-    <main id="main-content" class="max-w-7xl mx-auto py-5 px-4 sm:px-6 flex-1 w-full space-y-6 transition-opacity duration-200">
+    <!-- Main Container -->
+    <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 transition-opacity duration-200">
 
-        <!-- 1. FILTER GLOBAL MONITORING (Tidak sticky agar area baca di HP & desktop luas) -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 p-4 sm:p-5">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
+        <!-- SECTION 1: Monitoring Deklarasi Kesehatan PPLN -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h2 class="text-sm md:text-base font-bold text-slate-800 leading-snug">Monitoring Deklarasi Kesehatan PPLN — Bandara Internasional I Gusti Ngurah Rai</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Periode aktif: <span id="text-periode-global" class="font-semibold text-teal-800">Semua Waktu</span></p>
+                    <h2 class="text-sm sm:text-base font-bold text-slate-900">Monitoring Deklarasi Kesehatan PPLN — Bandara Internasional I Gusti Ngurah Rai</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Periode aktif: <span id="text-periode-top" class="font-bold text-[#0f766e]">Semua Waktu</span></p>
                 </div>
-                <div class="text-[11px] text-slate-500 flex flex-wrap items-center gap-x-2.5 gap-y-1 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 self-start md:self-center">
-                    <span id="info-dimuat-global">Dimuat: <strong class="text-slate-700">-</strong></span>
-                    <span class="hidden sm:inline text-slate-300">|</span>
-                    <span id="info-rentang-global">Rentang: <strong class="text-slate-700">Semua Waktu</strong></span>
+                <div class="inline-flex items-center divide-x divide-slate-200 bg-slate-50 border border-slate-200/90 rounded-lg text-[11px] text-slate-600">
+                    <span id="info-dimuat-global" class="px-3 py-1.5">Dimuat: <strong class="text-slate-800">-</strong></span>
+                    <span id="info-rentang-global" class="px-3 py-1.5">Rentang: <strong class="text-slate-800">Semua Waktu</strong></span>
                 </div>
             </div>
 
-            <div class="flex flex-col lg:flex-row gap-3 items-end mt-3.5">
-                <div class="w-full lg:flex-1">
-                    <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Pilih Negara Asal</label>
-                    <div class="relative">
-                        <select id="filter-negara-global" class="w-full pl-3.5 pr-10 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 appearance-none bg-white cursor-pointer font-medium text-slate-800 transition-colors">
-                            <option value="Semua Negara">Semua Negara</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                            <i class="fas fa-chevron-down text-xs"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="w-full lg:w-80 relative">
-                    <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Rentang Waktu Kedatangan</label>
-                    <button type="button" id="looker-date-btn" onclick="toggleCalendarPopup()" class="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg bg-white flex justify-between items-center text-slate-800 hover:border-teal-600 font-medium transition-colors">
-                        <span id="looker-date-label" class="truncate"><i class="fa-regular fa-calendar mr-2 text-teal-700"></i> Semua Waktu</span>
-                        <i class="fa-solid fa-chevron-down text-xs text-slate-400 ml-2"></i>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
+                <!-- Searchable Country Select -->
+                <div class="md:col-span-6 relative" id="country-select-wrapper">
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Pilih Negara Asal</label>
+                    <select id="filter-negara-global" class="hidden">
+                        <option value="Semua Negara" selected>Semua Negara</option>
+                    </select>
+                    <button type="button" onclick="toggleCountryDropdown()" class="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl hover:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 cursor-pointer">
+                        <span id="country-select-label" class="flex items-center gap-2 truncate">
+                            <span>Semua Negara</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px]"></i>
                     </button>
 
-                    <div id="looker-calendar-popup" class="looker-calendar-popup">
-                        <div class="mb-3 pb-2.5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Preset Cepat:</span>
-                            <select id="preset-dropdown" onchange="handlePresetChange(this.value)" class="w-full sm:w-56 px-3 py-1.5 text-xs font-semibold bg-slate-50 border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 cursor-pointer text-slate-700">
-                                <option value="">-- Pilih Preset Waktu --</option>
-                                <option value="semua" selected>Semua Waktu</option>
+                    <!-- Dropdown Popup -->
+                    <div id="country-select-popup" class="hidden absolute left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-40 overflow-hidden">
+                        <div class="p-2 border-b border-slate-100 bg-slate-50">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input type="text" id="country-search-input" oninput="filterCountryOptions(this.value)" placeholder="Cari nama negara..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-teal-600">
+                            </div>
+                        </div>
+                        <ul id="country-options-list" class="max-h-56 overflow-y-auto custom-scroll divide-y divide-slate-50 text-xs"></ul>
+                    </div>
+                </div>
+
+                <!-- Date Range Picker -->
+                <div class="md:col-span-3 relative">
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Rentang Waktu Kedatangan</label>
+                    <button type="button" id="looker-date-btn" onclick="toggleCalendarPopup()" class="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold text-slate-800 bg-white border border-slate-300 rounded-xl hover:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 cursor-pointer">
+                        <span id="looker-date-label" class="flex items-center truncate">
+                            <i class="fa-regular fa-calendar mr-2 text-slate-500"></i> Semua Waktu
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px]"></i>
+                    </button>
+
+                    <!-- Calendar Popup -->
+                    <div id="looker-calendar-popup" class="absolute left-0 right-0 sm:w-80 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl p-4 z-40 space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Preset Cepat</label>
+                            <select id="preset-dropdown" onchange="handlePresetChange(this.value)" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg bg-slate-50 font-medium text-slate-700 focus:border-teal-600 focus:outline-none">
+                                <option value="semua">Semua Waktu</option>
                                 <option value="hari_ini">Hari ini</option>
                                 <option value="kemarin">Kemarin</option>
                                 <option value="7_hari">7 hari terakhir</option>
@@ -170,327 +183,393 @@
                                 <option value="tahun_lalu">Tahun lalu</option>
                             </select>
                         </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70">
-                                <div class="font-bold text-[11px] text-slate-600 mb-1.5 uppercase tracking-wide">Tanggal Mulai</div>
-                                <input type="date" id="date-start-global" class="w-full px-2.5 py-1.5 text-xs font-medium bg-white border border-slate-300 rounded-md focus:ring-teal-600 focus:border-teal-600">
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tanggal Mulai</label>
+                                <input type="date" id="date-start-global" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-700 focus:border-teal-600 focus:outline-none">
                             </div>
-                            <div class="border border-slate-200 rounded-lg p-2.5 bg-slate-50/70">
-                                <div class="font-bold text-[11px] text-slate-600 mb-1.5 uppercase tracking-wide">Tanggal Akhir</div>
-                                <input type="date" id="date-end-global" class="w-full px-2.5 py-1.5 text-xs font-medium bg-white border border-slate-300 rounded-md focus:ring-teal-600 focus:border-teal-600">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tanggal Akhir</label>
+                                <input type="date" id="date-end-global" class="w-full px-2 py-1.5 text-xs border border-slate-300 rounded-lg text-slate-700 focus:border-teal-600 focus:outline-none">
                             </div>
                         </div>
-
-                        <div class="flex justify-end gap-2 mt-4 pt-2.5 border-t border-slate-100">
-                            <button type="button" onclick="toggleCalendarPopup()" class="px-3.5 py-1.5 text-xs bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-colors">Tutup</button>
+                        <div class="pt-2 flex justify-end">
+                            <button type="button" onclick="toggleCalendarPopup()" class="px-3 py-1.5 text-xs font-semibold bg-[#0f695d] text-white rounded-lg hover:bg-[#0b5248] cursor-pointer">Selesai</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex gap-2 w-full lg:w-auto flex-shrink-0">
-                    <button id="btn-terapkan-global" onclick="applyGlobalFilters()" class="flex-1 lg:flex-initial px-5 py-2 bg-teal-800 text-white text-sm font-semibold rounded-lg hover:bg-teal-950 transition-colors h-[38px] flex items-center justify-center">
-                        Terapkan
+                <!-- Action Buttons -->
+                <div class="md:col-span-3 flex items-center gap-2">
+                    <button type="button" onclick="applyGlobalFilters()" class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#0f695d] hover:bg-[#0b5248] text-white shadow-xs transition-colors cursor-pointer">
+                        <span>Terapkan</span>
                     </button>
-                    <button id="btn-reset-global" onclick="resetGlobalFilters()" class="px-3.5 py-2 bg-white text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 border border-slate-300 transition-colors flex items-center justify-center gap-1.5 h-[38px]" title="Reset semua filter">
-                        <i class="fa-solid fa-rotate-right text-xs text-slate-500"></i> Reset
+                    <button type="button" onclick="resetGlobalFilters()" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition-colors cursor-pointer">
+                        <i class="fa-solid fa-rotate-right text-[11px]"></i>
+                        <span>Reset</span>
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- 2. KOMPOSISI STATUS RIWAYAT PERJALANAN -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden flex flex-col">
-            <div class="grid grid-cols-1 lg:grid-cols-4">
-                <!-- Total Scorecard -->
-                <div class="lg:col-span-1 bg-teal-900 text-white p-5 flex flex-col justify-between relative overflow-hidden">
-                    <i class="fas fa-plane-arrival absolute -right-4 -bottom-4 text-7xl text-white/5 transform -rotate-12 pointer-events-none"></i>
+        <!-- SECTION 2: Scorecard Total Riwayat & Komposisi Status -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-12">
+                <!-- Kiri: Blok Hijau Tua Total Riwayat Perjalanan -->
+                <div class="lg:col-span-3 bg-[#095d52] text-white p-6 flex flex-col justify-between relative overflow-hidden">
+                    <i class="fa-solid fa-plane-arrival text-7xl text-teal-800/40 absolute -bottom-3 -right-3 pointer-events-none"></i>
                     <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider text-teal-200">Total Riwayat Perjalanan</p>
-                        <h3 class="text-3xl font-extrabold text-white mt-1.5 tabular-nums tracking-tight" id="val-total">0</h3>
+                        <p class="text-[11px] font-bold tracking-wider uppercase text-teal-200/90">TOTAL RIWAYAT PERJALANAN</p>
+                        <h3 id="val-total" class="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums mt-2">0</h3>
                     </div>
-                    <a href="dashboard.html" target="_blank" class="inline-flex items-center text-xs font-semibold text-teal-200 hover:text-white transition-colors gap-1.5 mt-5 pt-3 border-t border-white/10 z-10">
-                        <span>Buka Analisis PPLN Merah</span>
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                    </a>
+                    <div class="mt-8 relative z-10">
+                        <a href="dashboard.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-100 hover:text-white transition-colors">
+                            <span>Buka Analisis PPLN Merah</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </div>
                 </div>
 
-                <!-- 4 Status Breakdown -->
-                <div class="lg:col-span-3 flex flex-col">
-                    <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/60 flex justify-between items-center">
+                <!-- Kanan: Komposisi Status Riwayat Perjalanan -->
+                <div class="lg:col-span-9 flex flex-col justify-between">
+                    <div class="px-6 pt-5 pb-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
                         <div>
-                            <h3 class="text-sm sm:text-base font-bold text-slate-800">Komposisi Status Riwayat Perjalanan</h3>
-                            <p class="text-xs text-slate-500">Klasifikasi berdasarkan deklarasi kesehatan PPLN di pintu masuk.</p>
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">Komposisi Status Riwayat Perjalanan</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Klasifikasi berdasarkan deklarasi kesehatan PPLN di pintu masuk. (<span id="text-periode-global" class="font-medium text-slate-600">Semua Waktu</span>)</p>
                         </div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-0 flex-1 divide-x divide-y md:divide-y-0 divide-slate-100">
-                        <div class="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors">
-                            <div class="flex items-center gap-1.5 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hijau / Aman</p>
-                            </div>
-                            <h4 class="text-xl sm:text-2xl font-extrabold text-slate-800 tabular-nums" id="val-hijau">0</h4>
-                            <p class="text-xs font-bold text-emerald-700 mt-1 tabular-nums" id="pct-hijau">0%</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Tidak berisiko</p>
-                        </div>
 
-                        <div class="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors">
-                            <div class="flex items-center gap-1.5 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kuning / Terjangkit</p>
-                            </div>
-                            <h4 class="text-xl sm:text-2xl font-extrabold text-slate-800 tabular-nums" id="val-kuning">0</h4>
-                            <p class="text-xs font-bold text-amber-600 mt-1 tabular-nums" id="pct-kuning">0%</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Daerah terjangkit</p>
-                        </div>
-
-                        <div class="p-4 sm:p-5 hover:bg-rose-50/40 transition-colors relative group cursor-pointer border-l-2 border-l-rose-500 md:border-l-0" onclick="window.open('dashboard.html', '_blank')">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-rose-600"></span>
-                                    <p class="text-[10px] font-bold text-rose-700 uppercase tracking-wider">Status Merah</p>
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+                        <!-- HIJAU / AMAN -->
+                        <div class="bg-emerald-50/45 rounded-xl p-4 border border-emerald-200/80 flex items-stretch gap-3.5">
+                            <span class="w-12 sm:w-14 self-stretch rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-shield-heart"></i>
+                            </span>
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <span class="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider">HIJAU / AMAN</span>
+                                <h4 id="val-hijau" class="text-xl font-extrabold text-emerald-700 tabular-nums leading-tight mt-0.5">0</h4>
+                                <div class="mt-1.5">
+                                    <span id="pct-hijau" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 tabular-nums">0%</span>
                                 </div>
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-rose-400 group-hover:text-rose-600"></i>
+                                <p class="text-[11px] text-emerald-700/90 mt-1">Tidak berisiko</p>
                             </div>
-                            <h4 class="text-xl sm:text-2xl font-extrabold text-rose-600 tabular-nums" id="val-merah">0</h4>
-                            <p class="text-xs font-bold text-rose-700 mt-1 tabular-nums" id="pct-merah">0%</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Bergejala (klik detail)</p>
                         </div>
 
-                        <div class="p-4 sm:p-5 hover:bg-slate-50/70 transition-colors">
-                            <div class="flex items-center gap-1.5 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Riwayat Kontak</p>
+                        <!-- KUNING / TERJANGKIT -->
+                        <div class="bg-amber-50/45 rounded-xl p-4 border border-amber-200/80 flex items-stretch gap-3.5">
+                            <span class="w-12 sm:w-14 self-stretch rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-plane-circle-exclamation"></i>
+                            </span>
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <span class="block text-[10px] font-bold text-amber-800 uppercase tracking-wider">KUNING / TERJANGKIT</span>
+                                <h4 id="val-kuning" class="text-xl font-extrabold text-amber-700 tabular-nums leading-tight mt-0.5">0</h4>
+                                <div class="mt-1.5">
+                                    <span id="pct-kuning" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800 tabular-nums">0%</span>
+                                </div>
+                                <p class="text-[11px] text-amber-700/90 mt-1">Daerah terjangkit</p>
                             </div>
-                            <h4 class="text-xl sm:text-2xl font-extrabold text-slate-700 tabular-nums">0</h4>
-                            <p class="text-xs font-bold text-slate-500 mt-1 tabular-nums">0%</p>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Catatan tambahan</p>
+                        </div>
+
+                        <!-- STATUS MERAH (Klik Detail) -->
+                        <a href="dashboard.html" class="bg-rose-50/45 hover:bg-rose-50/80 rounded-xl p-4 border border-rose-200/80 flex items-stretch gap-3.5 transition-colors group">
+                            <span class="w-12 sm:w-14 self-stretch rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </span>
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider">STATUS MERAH</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] text-rose-400 group-hover:text-rose-600 shrink-0"></i>
+                                </div>
+                                <h4 id="val-merah" class="text-xl font-extrabold text-rose-700 tabular-nums leading-tight mt-0.5">0</h4>
+                                <div class="mt-1.5">
+                                    <span id="pct-merah" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800 tabular-nums">0%</span>
+                                </div>
+                                <p class="text-[11px] text-rose-700/90 mt-1">Bergejala</p>
+                            </div>
+                        </a>
+
+                        <!-- RIWAYAT KONTAK -->
+                        <div class="bg-slate-50/80 rounded-xl p-4 border border-slate-200/90 flex items-stretch gap-3.5">
+                            <span class="w-12 sm:w-14 self-stretch rounded-xl bg-slate-200/70 text-slate-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-address-book"></i>
+                            </span>
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <span class="block text-[10px] font-bold text-slate-600 uppercase tracking-wider">RIWAYAT KONTAK</span>
+                                <h4 id="val-kontak" class="text-xl font-extrabold text-slate-800 tabular-nums leading-tight mt-0.5">0</h4>
+                                <div class="mt-1.5">
+                                    <span id="pct-kontak" class="inline-block text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200/80 text-slate-700 tabular-nums">0%</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-1">Catatan tambahan</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Clean Formal Interpretation Panel -->
-            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5 transition-all">
+
+            <!-- Interpretasi & Rekapitulasi Umum -->
+            <details class="group bg-slate-50/70 border-t border-slate-200/80 px-5 py-3">
                 <summary class="flex items-center justify-between cursor-pointer list-none outline-none">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2">
                         <i class="fa-solid fa-circle-info text-teal-700 text-sm"></i>
-                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider m-0">Interpretasi & Rekapitulasi Umum</h4>
+                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider">INTERPRETASI & REKAPITULASI UMUM</h4>
                     </div>
-                    <span class="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-                        <span class="hidden sm:inline group-open:hidden">Lihat ringkasan</span>
-                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200 group-open:rotate-180"></i>
+                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                        <span>Lihat ringkasan</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform duration-200 group-open:rotate-180"></i>
                     </span>
                 </summary>
                 <div class="mt-3 pt-3 border-t border-slate-200/60 pl-3 border-l-2 border-l-teal-700">
-                    <div id="ai-text" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-2">
-                        Memuat pembacaan data otomatis...
+                    <div id="ai-text" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-1.5">
+                        Memuat ringkasan data...
                     </div>
                 </div>
             </details>
         </section>
 
-        <!-- 3. TREN BULANAN DINAMIS (2025, 2026, 2027+) -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 flex flex-col overflow-hidden">
-            <div class="p-5 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Tren Bulanan Kedatangan PPLN Bergejala (Antar Tahun)</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Perbandingan distribusi kasus status merah setiap bulan di Bandara I Gusti Ngurah Rai.</p>
-                    </div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 self-start">
-                        Negara: <span id="badge-negara-tren" class="ml-1.5 text-teal-800 font-bold">Semua Negara</span>
+        <!-- SECTION 3: Grafik Tren Bulanan -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm shrink-0">
+                        <i class="fa-solid fa-chart-line"></i>
                     </span>
-                </div>
-
-                <div class="flex flex-col md:flex-row gap-3 items-end bg-slate-50/70 p-3.5 rounded-lg border border-slate-200/70">
-                    <div class="flex-1 w-full">
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Filter Negara</label>
-                        <select id="filter-negara-tren" class="w-full pl-3 pr-8 py-2 text-sm border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
-                            <option value="Semua Negara">Semua Negara</option>
-                        </select>
-                    </div>
-                    <div class="flex-1 w-full">
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Filter Tahun</label>
-                        <select id="filter-tahun-tren" class="w-full pl-3 pr-8 py-2 text-sm border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
-                            <option value="Semua Tahun">Semua Tahun</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-2 w-full md:w-auto">
-                        <button onclick="renderGrafikTrenRiil()" class="flex-1 md:flex-initial px-4 py-2 bg-teal-800 text-white text-sm font-semibold rounded-lg hover:bg-teal-900 transition-colors">
-                            Terapkan
-                        </button>
-                        <button onclick="resetTrenRiil()" class="px-3.5 py-2 bg-white text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 border border-slate-300 transition-colors">
-                            Reset
-                        </button>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Tren Bulanan Penumpang Berstatus Merah</h2>
+                        <p class="text-[11px] text-slate-500">Dinamika kasus bergejala per bulan</p>
                     </div>
                 </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    Negara: <span id="badge-negara-tren" class="ml-1 text-teal-800 font-bold">Semua Negara</span>
+                </span>
+            </div>
 
-                <div class="relative h-[290px] w-full pt-2">
+            <div class="bg-slate-50/70 px-5 py-3 border-b border-slate-100 flex flex-wrap items-end gap-3">
+                <div class="w-full sm:w-56">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Negara Grafik</label>
+                    <select id="filter-negara-tren" onchange="renderGrafikTrenRiil()" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white font-medium text-slate-800 focus:border-teal-600 focus:outline-none">
+                        <option value="Semua Negara">Semua Negara</option>
+                    </select>
+                </div>
+                <div class="w-full sm:w-52">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter Tahun</label>
+                    <select id="filter-tahun-tren" onchange="renderGrafikTrenRiil()" class="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white font-medium text-slate-800 focus:border-teal-600 focus:outline-none">
+                        <option value="Semua Tahun">Semua Tahun</option>
+                    </select>
+                </div>
+                <button type="button" onclick="resetTrenRiil()" class="px-3 py-1.5 text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg cursor-pointer">
+                    Reset Grafik
+                </button>
+            </div>
+
+            <div class="p-5">
+                <div class="h-72 w-full">
                     <canvas id="chartTrenBergejala"></canvas>
                 </div>
             </div>
 
-            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5 transition-all">
+            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5">
                 <summary class="flex items-center justify-between cursor-pointer list-none outline-none">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2">
                         <i class="fa-solid fa-circle-info text-teal-700 text-sm"></i>
-                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider m-0">Interpretasi Analisis Tren</h4>
+                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Interpretasi Tren Bulanan</h4>
                     </div>
                     <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 group-open:rotate-180"></i>
                 </summary>
                 <div class="mt-3 pt-3 border-t border-slate-200/60 pl-3 border-l-2 border-l-teal-700">
-                    <div id="ai-text-tren" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-2">
-                        Memuat analisis tren bulanan komprehensif...
+                    <div id="ai-text-tren" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-1.5">
+                        Memuat analisis tren...
                     </div>
                 </div>
             </details>
         </section>
 
-        <!-- 4. BERGEJALA PER 100.000 RIWAYAT PERJALANAN -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 flex flex-col overflow-hidden">
-            <div class="p-5 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-800">Rasio Kasus Bergejala per 100.000 Riwayat Perjalanan</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Analisis insidensi (<i>rate</i>) kasus bergejala terhadap total volume kedatangan PPLN.</p>
-                    </div>
-                    <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 self-start">
-                        Negara: <span id="badge-negara-per100k" class="ml-1.5 text-teal-800 font-bold">Semua Negara</span>
+        <!-- SECTION 4: Rate Kasus Bergejala per 100.000 & Rincian Bulanan -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm shrink-0">
+                        <i class="fa-solid fa-heart-pulse"></i>
                     </span>
-                </div>
-
-                <!-- 3 KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-50/70 rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rate Tertinggi</span>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 flex-shrink-0">
-                                <i class="fa-regular fa-calendar text-[10px]"></i> <span id="card-rate-tinggi-bulan">-</span>
-                            </span>
-                        </div>
-                        <div>
-                            <h4 class="text-2xl font-extrabold text-slate-800 tabular-nums" id="card-rate-tinggi">-</h4>
-                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">per 100.000 riwayat</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50/70 rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rata-rata Rate Kumulatif</span>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200/80 flex-shrink-0">
-                                <i class="fa-solid fa-scale-balanced text-[10px]"></i> Global
-                            </span>
-                        </div>
-                        <div>
-                            <h4 class="text-2xl font-extrabold text-slate-800 tabular-nums" id="card-rate-avg">-</h4>
-                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">per 100.000 riwayat</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50/70 rounded-xl p-4 border border-slate-200/80 flex flex-col justify-between gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Volume Acuan</span>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-slate-200/70 text-slate-700 flex-shrink-0">
-                                <i class="fa-regular fa-calendar-days text-[10px]"></i> <span id="card-rate-volume-bulan">-</span>
-                            </span>
-                        </div>
-                        <div>
-                            <h4 class="text-2xl font-extrabold text-slate-800 tabular-nums" id="card-rate-volume">-</h4>
-                            <p class="text-[11px] text-slate-500 font-medium mt-0.5">total riwayat valid</p>
-                        </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Bergejala per 100.000 Riwayat Perjalanan</h2>
+                        <p class="text-[11px] text-slate-500">Analisis rate kasus bergejala terhadap volume kedatangan PPLN</p>
                     </div>
                 </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    Negara: <span id="badge-negara-per100k" class="ml-1 text-teal-800 font-bold">Semua Negara</span>
+                </span>
+            </div>
 
-                <!-- Tabel & Ringkasan Temuan -->
-                <div class="flex flex-col lg:flex-row gap-4 mt-2">
-                    <div class="lg:w-2/3 overflow-x-auto custom-scroll max-h-[300px] border border-slate-200 rounded-xl">
-                        <table class="w-full text-left border-collapse text-xs tabular-nums">
-                            <thead class="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
-                                <tr class="text-slate-500 text-[10px] uppercase tracking-wider">
-                                    <th class="py-3 px-4 font-bold">Tahun</th>
-                                    <th class="py-3 px-4 font-bold">Bulan</th>
-                                    <th class="py-3 px-4 font-bold text-right">Total Riwayat</th>
-                                    <th class="py-3 px-4 font-bold text-right">Bergejala</th>
-                                    <th class="py-3 px-4 font-bold text-right">Rate / 100.000</th>
-                                    <th class="py-3 px-4 font-bold text-right">%</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-per100k" class="text-slate-700 divide-y divide-slate-100 bg-white">
-                                <tr><td colspan="6" class="py-6 text-center text-slate-400">Memuat data...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="lg:w-1/3 flex flex-col border border-slate-200 rounded-xl overflow-hidden bg-white">
-                        <div class="bg-teal-900 px-4 py-3 text-white flex items-center gap-2">
-                            <i class="fa-solid fa-clipboard-check text-teal-300 text-sm"></i>
-                            <h4 class="font-bold text-xs uppercase tracking-wider">Ringkasan Temuan Data</h4>
+            <div class="p-5 space-y-5">
+                <!-- Baris Atas: 3 Kartu KPI Responsif Mobile & Desktop -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- KPI 1: Rate Tertinggi -->
+                    <div class="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-rose-200 transition-colors">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-bold text-slate-600">Rate Tertinggi</p>
+                                <h4 id="card-rate-tinggi" class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums leading-tight mt-0.5">0,00</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Per 100.000 riwayat</p>
+                            </div>
                         </div>
-                        <div class="p-4 flex-1 flex flex-col justify-between divide-y divide-slate-100">
-                            <div class="pb-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Kasus Bergejala Terbanyak</p>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-0.5 tabular-nums" id="ringkasan-kasus-max">-</h4>
-                                    <p class="text-xs text-slate-500 mt-0.5" id="ringkasan-kasus-max-bln">-</p>
+                        <span class="self-start sm:self-center inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50/90 border border-rose-200/80 text-rose-700 text-[11px] font-bold shrink-0">
+                            <i class="fa-regular fa-calendar text-rose-600"></i>
+                            <span id="card-rate-tinggi-bulan">-</span>
+                        </span>
+                    </div>
+
+                    <!-- KPI 2: Rata-rata Rate Global -->
+                    <div class="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-teal-200 transition-colors">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-teal-50 border border-teal-200/80 text-teal-700 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-bullseye"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-bold text-slate-600">Rata-rata Rate Global</p>
+                                <h4 id="card-rate-avg" class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums leading-tight mt-0.5">0,00</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Per 100.000 riwayat</p>
+                            </div>
+                        </div>
+                        <span class="self-start sm:self-center inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-teal-50/90 border border-teal-200/80 text-teal-800 text-[11px] font-bold shrink-0 sm:text-right leading-tight">
+                            <i class="fa-solid fa-globe text-teal-700"></i>
+                            <span>Per 100.000<br class="hidden sm:inline"> perjalanan</span>
+                        </span>
+                    </div>
+
+                    <!-- KPI 3: Total Volume Acuan -->
+                    <div class="bg-slate-50/70 rounded-2xl p-4 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-emerald-200 transition-colors">
+                        <div class="flex items-center gap-3.5 min-w-0">
+                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                                <i class="fa-solid fa-plane-arrival"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[11px] font-bold text-slate-600">Total Volume Acuan</p>
+                                <h4 id="card-rate-volume" class="text-xl sm:text-2xl font-extrabold text-slate-900 tabular-nums leading-tight mt-0.5">0</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Total riwayat perjalanan</p>
+                            </div>
+                        </div>
+                        <span class="self-start sm:self-center inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-800 text-[11px] font-bold shrink-0 sm:text-right leading-tight">
+                            <i class="fa-regular fa-calendar-check text-emerald-700"></i>
+                            <span id="card-rate-volume-bulan">0 bulan<br class="hidden sm:inline"> data</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Baris Bawah: Tabel Rincian Bulanan (Kiri 8 Kolom) & Panel Ringkasan Temuan Data (Kanan 4 Kolom) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                    <!-- Kiri: Tabel Rincian Bulanan -->
+                    <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 overflow-hidden flex flex-col">
+                        <div class="sm:hidden px-3.5 py-1.5 bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 flex items-center justify-end gap-1">
+                            <span>Geser tabel ke samping</span>
+                            <i class="fa-solid fa-arrow-right-long text-teal-700"></i>
+                        </div>
+                        <div class="overflow-x-auto custom-scroll flex-1 max-h-[340px]">
+                            <table class="w-full text-left border-collapse text-xs tabular-nums min-w-[580px]">
+                                <thead class="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
+                                    <tr class="text-slate-500 text-[10px] uppercase tracking-wider">
+                                        <th class="py-3 px-4 font-bold">Tahun</th>
+                                        <th class="py-3 px-4 font-bold">Bulan</th>
+                                        <th class="py-3 px-4 font-bold text-right">Total Riwayat</th>
+                                        <th class="py-3 px-4 font-bold text-right text-rose-600">Bergejala</th>
+                                        <th class="py-3 px-4 font-bold text-right">Rate per 100.000</th>
+                                        <th class="py-3 px-4 font-bold text-right">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-per100k" class="text-slate-700 divide-y divide-slate-100">
+                                    <tr><td colspan="6" class="py-6 text-center text-slate-400">Memuat rincian bulanan...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Kanan: Ringkasan Temuan Data -->
+                    <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 overflow-hidden flex flex-col">
+                        <div class="bg-teal-700 text-white px-4 py-2.5 flex items-center gap-2">
+                            <i class="fa-regular fa-lightbulb text-amber-200 text-xs"></i>
+                            <h3 class="text-xs font-bold tracking-wide">Ringkasan Temuan Data</h3>
+                        </div>
+
+                        <div class="p-3.5 flex-1 flex flex-col justify-between gap-3 bg-slate-50/50">
+                            <!-- Card Temuan 1: Kasus Bergejala Terbanyak -->
+                            <div class="rounded-xl p-3.5 bg-gradient-to-r from-rose-50/90 via-rose-50/40 to-white border border-rose-200/80 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-base shrink-0">
+                                        <i class="fa-solid fa-users"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-bold text-slate-600 leading-snug">Kasus Bergejala Terbanyak</p>
+                                        <p id="ringkasan-kasus-max" class="text-base font-extrabold text-slate-900 tabular-nums mt-0.5">0 kasus</p>
+                                        <p id="ringkasan-kasus-max-bln" class="text-[11px] text-slate-500 mt-0.5">-</p>
+                                    </div>
                                 </div>
-                                <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-users"></i>
-                                </div>
+                                <i class="fa-solid fa-chart-simple text-2xl text-rose-300/80 shrink-0"></i>
                             </div>
 
-                            <div class="py-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Rate Terendah</p>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-0.5 tabular-nums" id="ringkasan-rate-min">-</h4>
-                                    <p class="text-xs text-slate-500 mt-0.5" id="ringkasan-rate-min-bln">-</p>
+                            <!-- Card Temuan 2: Rate Terendah -->
+                            <div class="rounded-xl p-3.5 bg-gradient-to-r from-slate-100/90 via-slate-50/60 to-white border border-slate-200/90 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-11 h-11 rounded-full bg-slate-200/80 text-slate-700 flex items-center justify-center text-base shrink-0">
+                                        <i class="fa-solid fa-arrow-trend-down"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-bold text-slate-600 leading-snug">Rate Terendah</p>
+                                        <p id="ringkasan-rate-min" class="text-base font-extrabold text-slate-900 tabular-nums mt-0.5">0,00</p>
+                                        <p id="ringkasan-rate-min-bln" class="text-[11px] text-slate-500 mt-0.5">-</p>
+                                    </div>
                                 </div>
-                                <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm">
-                                    <i class="fa-solid fa-arrow-trend-down"></i>
-                                </div>
+                                <i class="fa-solid fa-chart-simple text-2xl text-slate-300/80 shrink-0"></i>
                             </div>
 
-                            <div class="pt-3 flex items-center justify-between">
-                                <div>
-                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Perubahan Rate Terakhir</p>
-                                    <h4 class="text-lg font-extrabold text-slate-800 mt-0.5 tabular-nums" id="ringkasan-tren-akhir">-</h4>
-                                    <p class="text-[11px] text-slate-500 mt-0.5" id="ringkasan-tren-akhir-bln">-</p>
+                            <!-- Card Temuan 3: Perubahan Rate Terakhir -->
+                            <div class="rounded-xl p-3.5 bg-gradient-to-r from-teal-50/90 via-teal-50/40 to-white border border-teal-200/80 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div id="wrap-icon-tren-akhir" class="w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-base shrink-0">
+                                        <i id="icon-tren-akhir" class="fa-solid fa-arrow-trend-up"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-bold text-slate-600 leading-snug">Perubahan Rate Terakhir</p>
+                                        <p id="ringkasan-tren-akhir" class="text-base font-extrabold text-teal-800 tabular-nums mt-0.5">0,00%</p>
+                                        <p id="ringkasan-tren-akhir-bln" class="text-[11px] text-slate-500 mt-0.5">-</p>
+                                    </div>
                                 </div>
-                                <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-sm">
-                                    <i id="icon-tren-akhir" class="fa-solid fa-minus"></i>
-                                </div>
+                                <i class="fa-solid fa-chart-simple text-2xl text-teal-300/80 shrink-0"></i>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5 transition-all">
+            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5">
                 <summary class="flex items-center justify-between cursor-pointer list-none outline-none">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2">
                         <i class="fa-solid fa-circle-info text-teal-700 text-sm"></i>
-                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider m-0">Interpretasi Analisis Bergejala 100.000 & Rincian Bulanan</h4>
+                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Interpretasi Insidensi per 100.000</h4>
                     </div>
                     <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 group-open:rotate-180"></i>
                 </summary>
-                <div class="mt-3 pt-3 border-t border-slate-200/60 pl-3 border-l-2 border-l-teal-700">
-                    <div class="space-y-2 text-xs sm:text-[13px] text-slate-600 leading-relaxed">
-                        <div id="ai-text-per100k">Memuat interpretasi rate per 100.000...</div>
-                        <div id="ai-text-rincian">Memuat interpretasi rincian bulanan...</div>
-                    </div>
+                <div class="mt-3 pt-3 border-t border-slate-200/60 pl-3 border-l-2 border-l-teal-700 space-y-2 text-xs sm:text-[13px] text-slate-600 leading-relaxed">
+                    <div id="ai-text-per100k"></div>
+                    <div id="ai-text-rincian"></div>
                 </div>
             </details>
         </section>
 
-        <!-- 5. RASIO BERGEJALA PER NEGARA -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden flex flex-col">
-            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-800">Rasio Bergejala per Negara Asal</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Persentase kedatangan berstatus merah terhadap total riwayat perjalanan masing-masing negara.</p>
+        <!-- SECTION 5: Rasio Status Merah per Negara -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm shrink-0">
+                        <i class="fa-solid fa-earth-asia"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Rasio Kasus Status Merah Berdasarkan Negara Asal</h2>
+                        <p class="text-[11px] text-slate-500">Perbandingan proporsi penumpang bergejala antar negara</p>
+                    </div>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         Periode: <span id="badge-periode-rasio" class="ml-1 text-teal-800 font-bold">Semua Waktu</span>
                     </span>
@@ -500,69 +579,78 @@
                 </div>
             </div>
 
-            <div class="bg-slate-50/70 px-5 py-3.5 border-b border-slate-100">
-                <div class="flex flex-col sm:flex-row gap-3 items-end">
-                    <div class="w-full sm:w-52">
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Minimal Total Riwayat</label>
-                        <select id="filter-min-riwayat" class="block w-full pl-3 pr-10 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
-                            <option value="0" selected>Semua Data (≥ 0)</option>
-                            <option value="100">≥ 100 kedatangan</option>
-                            <option value="500">≥ 500 kedatangan</option>
-                            <option value="1000">≥ 1.000 kedatangan</option>
-                        </select>
-                    </div>
-                    <div class="w-full sm:w-56">
-                        <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Urutkan Berdasarkan</label>
-                        <select id="filter-urutkan" class="block w-full pl-3 pr-10 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
-                            <option value="rasio_desc">Rasio % Merah Tertinggi</option>
-                            <option value="merah_desc">Jumlah Merah Terbanyak</option>
-                            <option value="total_desc">Total Riwayat Terbanyak</option>
-                        </select>
-                    </div>
+            <div class="bg-slate-50/70 px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row gap-3 items-end">
+                <div class="w-full sm:w-52">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Minimal Total Riwayat</label>
+                    <select id="filter-min-riwayat" class="block w-full pl-3 pr-10 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
+                        <option value="0">Semua Negara (≥ 0)</option>
+                        <option value="10">≥ 10 Kedatangan</option>
+                        <option value="50">≥ 50 Kedatangan</option>
+                        <option value="100" selected>≥ 100 Kedatangan</option>
+                        <option value="500">≥ 500 Kedatangan</option>
+                    </select>
+                </div>
+                <div class="w-full sm:w-64">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">Urutkan Tabel Berdasarkan</label>
+                    <select id="filter-urutkan" class="block w-full pl-3 pr-10 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-teal-600 focus:border-teal-600 bg-white cursor-pointer font-medium text-slate-800">
+                        <option value="rasio_desc" selected>Rasio Merah Tertinggi (%)</option>
+                        <option value="merah_desc">Jumlah Kasus Merah Terbanyak</option>
+                        <option value="total_desc">Total Kedatangan Terbanyak</option>
+                    </select>
                 </div>
             </div>
 
-            <div class="overflow-x-auto custom-scroll max-h-[290px]">
-                <table class="w-full text-left border-collapse text-xs tabular-nums">
-                    <thead class="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
+            <div class="sm:hidden px-4 py-1.5 bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 flex items-center justify-end gap-1">
+                <span>Geser tabel ke samping</span>
+                <i class="fa-solid fa-arrow-right-long text-teal-700"></i>
+            </div>
+
+            <div class="overflow-x-auto custom-scroll max-h-[300px]">
+                <table class="w-full text-left border-collapse text-xs tabular-nums min-w-[600px]">
+                    <thead class="sticky top-0 bg-slate-50 z-20 border-b border-slate-200">
                         <tr class="text-slate-500 text-[10px] uppercase tracking-wider">
                             <th class="py-2.5 px-4 font-bold w-12 text-center">No</th>
-                            <th class="py-2.5 px-4 font-bold">Negara Asal</th>
+                            <th class="py-2.5 px-4 font-bold sticky left-0 bg-slate-50 z-30 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">Negara Asal</th>
                             <th class="py-2.5 px-4 font-bold text-right">Total Riwayat</th>
-                            <th class="py-2.5 px-4 font-bold text-right text-rose-600">Bergejala (Merah)</th>
+                            <th class="py-2.5 px-4 font-bold text-right text-rose-600">Status Merah</th>
                             <th class="py-2.5 px-4 font-bold text-right">Rasio Merah (%)</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-rasio-negara" class="text-slate-700 divide-y divide-slate-100">
-                        <tr><td colspan="5" class="py-5 text-center text-slate-400">Memuat data...</td></tr>
+                        <tr><td colspan="5" class="py-5 text-center text-slate-400">Memuat data rasio...</td></tr>
                     </tbody>
                 </table>
             </div>
 
-            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5 transition-all">
+            <details class="group bg-slate-50/80 border-t border-slate-200/80 px-5 py-3.5">
                 <summary class="flex items-center justify-between cursor-pointer list-none outline-none">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2">
                         <i class="fa-solid fa-circle-info text-teal-700 text-sm"></i>
-                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider m-0">Interpretasi Analisis Rasio Bergejala</h4>
+                        <h4 class="font-bold text-slate-700 text-xs uppercase tracking-wider">Interpretasi Rasio per Negara</h4>
                     </div>
                     <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform duration-200 group-open:rotate-180"></i>
                 </summary>
                 <div class="mt-3 pt-3 border-t border-slate-200/60 pl-3 border-l-2 border-l-teal-700">
-                    <div id="ai-text-rasio" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-2">
-                        Memuat analisis rasio bergejala...
+                    <div id="ai-text-rasio" class="text-xs sm:text-[13px] text-slate-600 leading-relaxed space-y-1.5">
+                        Memuat analisis rasio...
                     </div>
                 </div>
             </details>
         </section>
 
-        <!-- 6. HASIL VERIFIKASI BERDASARKAN RIWAYAT PERJALANAN -->
-        <section class="bg-white rounded-xl shadow-xs border border-slate-200/90 overflow-hidden flex flex-col">
-            <div class="p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-800">Hasil Verifikasi Berdasarkan Riwayat Perjalanan</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Tinjauan cakupan verifikasi penumpang untuk menentukan prioritas tindak lanjut.</p>
+        <!-- SECTION 6: Hasil Verifikasi & Negara Prioritas -->
+        <section class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center text-sm shrink-0">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Hasil Verifikasi Kesehatan & Prioritas Pengawasan</h2>
+                        <p class="text-[11px] text-slate-500">Pemantauan tindak lanjut status merah dan daerah terjangkit</p>
+                    </div>
                 </div>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                         Periode: <span id="badge-periode-verif" class="ml-1 text-teal-800 font-bold">Semua Waktu</span>
                     </span>
@@ -604,7 +692,12 @@
                     <!-- Kartu Negara Prioritas Fleksibel -->
                     <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 border-l-4 border-l-teal-700 flex flex-col justify-between gap-2.5">
                         <div class="flex flex-wrap items-center justify-between gap-1.5">
-                            <p class="text-[11px] font-bold text-teal-900 uppercase tracking-wider">Negara Prioritas</p>
+                            <div class="flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center text-sm shrink-0">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                </span>
+                                <p class="text-[11px] font-bold text-teal-900 uppercase tracking-wider">Negara Prioritas</p>
+                            </div>
                             <select id="mode-prioritas-verif" title="Ganti kriteria penentu Negara Prioritas" class="px-2 py-0.5 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 rounded-md focus:ring-teal-600 focus:border-teal-600 cursor-pointer max-w-full">
                                 <option value="endemik" selected>Mode: Endemik + Merah</option>
                                 <option value="kuning">Mode: Status Kuning</option>
@@ -618,30 +711,43 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between gap-2.5">
-                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tidak Respons Terbanyak</p>
-                        <div>
-                            <h4 class="text-base font-extrabold text-slate-800" id="card-respon-negara">-</h4>
-                            <p class="text-xs text-slate-600 mt-1 tabular-nums" id="card-respon-val">0 tidak respons</p>
+                    <!-- Kartu Tidak Respons Terbanyak -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3.5">
+                        <span class="w-12 h-12 rounded-2xl bg-amber-100/80 text-amber-700 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-phone-slash"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tidak Respons Terbanyak</p>
+                            <h4 class="text-base font-extrabold text-slate-800 mt-0.5 truncate" id="card-respon-negara">-</h4>
+                            <p class="text-xs text-slate-600 mt-0.5 tabular-nums" id="card-respon-val">0 tidak respons</p>
                         </div>
                     </div>
 
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col justify-between gap-2.5">
-                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">VERIF Merah Terbanyak</p>
-                        <div>
-                            <h4 class="text-base font-extrabold text-slate-800" id="card-verif-negara">-</h4>
-                            <p class="text-xs text-slate-600 mt-1 tabular-nums" id="card-verif-val">0 VERIF Merah</p>
+                    <!-- Kartu VERIF Merah Terbanyak -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center gap-3.5">
+                        <span class="w-12 h-12 rounded-2xl bg-rose-100/80 text-rose-600 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-solid fa-file-medical"></i>
+                        </span>
+                        <div class="min-w-0">
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">VERIF Merah Terbanyak</p>
+                            <h4 class="text-base font-extrabold text-slate-800 mt-0.5 truncate" id="card-verif-negara">-</h4>
+                            <p class="text-xs text-slate-600 mt-0.5 tabular-nums" id="card-verif-val">0 VERIF Merah</p>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <div class="sm:hidden px-4 py-1.5 bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 flex items-center justify-end gap-1">
+                <span>Geser tabel ke samping</span>
+                <i class="fa-solid fa-arrow-right-long text-teal-700"></i>
+            </div>
+
             <div class="overflow-x-auto custom-scroll max-h-[300px]">
-                <table class="w-full text-left border-collapse text-xs tabular-nums min-w-[780px]">
-                    <thead class="sticky top-0 bg-slate-50 z-10 border-b border-slate-200">
+                <table class="w-full text-left border-collapse text-xs tabular-nums min-w-[820px]">
+                    <thead class="sticky top-0 bg-slate-50 z-20 border-b border-slate-200">
                         <tr class="text-slate-500 text-[10px] uppercase tracking-wider">
                             <th class="py-2.5 px-3 font-bold w-10 text-center">No</th>
-                            <th class="py-2.5 px-3 font-bold">Negara</th>
+                            <th class="py-2.5 px-3 font-bold sticky left-0 bg-slate-50 z-30 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">Negara</th>
                             <th class="py-2.5 px-3 font-bold text-right">Total Riwayat</th>
                             <th class="py-2.5 px-3 font-bold text-right text-amber-600">Kuning</th>
                             <th class="py-2.5 px-3 font-bold text-right text-rose-600">VERIF Merah</th>
@@ -676,6 +782,21 @@
 
     </main>
 
+    <!-- Footer SIVERA -->
+    <footer class="bg-white border-t border-slate-200/90 mt-8">
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-teal-600"></span>
+                <span class="font-semibold text-slate-700">SIVERA</span>
+                <span class="text-slate-300">&bull;</span>
+                <span>Sistem Interpretasi Verifikasi Status Merah berdasarkan Riwayat Kedatangan</span>
+            </div>
+            <div class="text-[11px] text-slate-400">
+                Visualisasi & Analisis Data Riwayat Perjalanan PPLN
+            </div>
+        </div>
+    </footer>
+
     <script>
     const API_BASE = 'https://smartkarkes-dashboard.onrender.com';
 
@@ -685,8 +806,12 @@
     };
 
     let chartTrenInstance = null;
-    
-    const bulanLabelsIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    let daftarNegaraUnique = [];
+
+    const bulanLabelsIndo = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
     let daftarNegaraTerjangkit = {};
 
     function translateBulan(bulanStr) {
@@ -699,20 +824,99 @@
         return mapping[bulanStr] || bulanStr;
     }
 
+    function getMonthIndex(bulanStr) {
+        const indo = translateBulan(bulanStr);
+        return bulanLabelsIndo.findIndex(b => b.toLowerCase() === indo.toLowerCase());
+    }
+
     const elFilterNegaraGlobal = document.getElementById('filter-negara-global');
     const elDateStartGlobal = document.getElementById('date-start-global');
     const elDateEndGlobal = document.getElementById('date-end-global');
     const elFilterNegaraTren = document.getElementById('filter-negara-tren');
     const elFilterTahunTren = document.getElementById('filter-tahun-tren');
 
-    function toggleCalendarPopup() { document.getElementById('looker-calendar-popup').classList.toggle('active'); }
+    // Searchable Country Dropdown Handlers
+    function toggleCountryDropdown() {
+        const popup = document.getElementById('country-select-popup');
+        const input = document.getElementById('country-search-input');
+        if (!popup || !input) return;
 
-    // Tutup popup kalender jika klik di luar area
+        const isHidden = popup.classList.contains('hidden');
+        if (isHidden) {
+            popup.classList.remove('hidden');
+            input.value = '';
+            renderCountryOptionsList('');
+            setTimeout(() => input.focus(), 50);
+        } else {
+            popup.classList.add('hidden');
+        }
+    }
+
+    function filterCountryOptions(keyword) {
+        renderCountryOptionsList(keyword);
+    }
+
+    function renderCountryOptionsList(keyword = '') {
+        const listEl = document.getElementById('country-options-list');
+        if (!listEl) return;
+
+        const currentSelected = elFilterNegaraGlobal.value || 'Semua Negara';
+        const q = keyword.trim().toLowerCase();
+
+        const filtered = daftarNegaraUnique.filter(n => n.toLowerCase().includes(q));
+        let html = '';
+
+        if ('semua negara'.includes(q)) {
+            const isSel = currentSelected === 'Semua Negara';
+            html += `
+            <li onclick="selectCountryOption('Semua Negara')" class="px-3.5 py-2 hover:bg-teal-50 cursor-pointer flex items-center justify-between ${isSel ? 'bg-teal-50/80 font-bold text-teal-900' : 'font-semibold text-slate-700'}">
+                <span>Semua Negara</span>
+                ${isSel ? '<i class="fa-solid fa-check text-teal-700 text-[10px]"></i>' : ''}
+            </li>`;
+        }
+
+        filtered.forEach(n => {
+            const isSel = currentSelected.toLowerCase() === n.toLowerCase();
+            const safeVal = n.replace(/'/g, "\\'");
+            html += `
+            <li onclick="selectCountryOption('${safeVal}')" class="px-3.5 py-2 hover:bg-teal-50 cursor-pointer flex items-center justify-between ${isSel ? 'bg-teal-50/80 font-bold text-teal-900' : 'text-slate-700'}">
+                <span>${n}</span>
+                ${isSel ? '<i class="fa-solid fa-check text-teal-700 text-[10px]"></i>' : ''}
+            </li>`;
+        });
+
+        if (!html) {
+            html = `<li class="px-3.5 py-3 text-center text-slate-400">Negara tidak ditemukan</li>`;
+        }
+        listEl.innerHTML = html;
+    }
+
+    function selectCountryOption(val) {
+        elFilterNegaraGlobal.value = val;
+        const labelEl = document.getElementById('country-select-label');
+        if (labelEl) {
+            labelEl.innerHTML = `<span>${val}</span>`;
+        }
+        const popup = document.getElementById('country-select-popup');
+        if (popup) popup.classList.add('hidden');
+    }
+
+    function toggleCalendarPopup() {
+        const popup = document.getElementById('looker-calendar-popup');
+        if (popup) popup.classList.toggle('active');
+    }
+
     document.addEventListener('click', (e) => {
         const popup = document.getElementById('looker-calendar-popup');
         const btn = document.getElementById('looker-date-btn');
         if (popup && btn && !popup.contains(e.target) && !btn.contains(e.target)) {
             popup.classList.remove('active');
+        }
+
+        const countryWrapper = document.getElementById('country-select-wrapper');
+        const countryPopup = document.getElementById('country-select-popup');
+        if (countryWrapper && countryPopup && !countryWrapper.contains(e.target)) {
+            countryPopup.classList.add('hidden');
         }
     });
 
@@ -720,8 +924,9 @@
         const menu = document.getElementById('mobile-menu-dropdown');
         const icon = document.getElementById('mobile-menu-icon');
         const btn = document.getElementById('mobile-menu-btn');
-        const isHidden = menu.classList.contains('hidden');
+        if (!menu || !icon || !btn) return;
 
+        const isHidden = menu.classList.contains('hidden');
         if (isHidden) {
             menu.classList.remove('hidden');
             icon.className = 'fa-solid fa-xmark text-base';
@@ -737,11 +942,10 @@
         const btn = document.getElementById('mobile-menu-btn');
         if (!menu) return;
         menu.classList.add('hidden');
-        icon.className = 'fa-solid fa-bars text-base';
-        btn.setAttribute('aria-expanded', 'false');
+        if (icon) icon.className = 'fa-solid fa-bars text-base';
+        if (btn) btn.setAttribute('aria-expanded', 'false');
     }
 
-    // Tutup burger menu otomatis jika klik di luar header
     document.addEventListener('click', (e) => {
         const header = document.querySelector('header');
         if (header && !header.contains(e.target)) {
@@ -754,62 +958,90 @@
         const today = new Date();
         let start = '', end = '', label = '';
 
-        if (type === 'semua') { label = 'Semua Waktu'; }
-        else if (type === 'hari_ini') { start = end = today.toISOString().split('T')[0]; label = 'Hari ini'; }
-        else if (type === 'kemarin') {
-            const yest = new Date(today); yest.setDate(today.getDate() - 1);
-            start = end = yest.toISOString().split('T')[0]; label = 'Kemarin';
+        if (type === 'semua') {
+            label = 'Semua Waktu';
+        } else if (type === 'hari_ini') {
+            start = end = today.toISOString().split('T')[0];
+            label = 'Hari ini';
+        } else if (type === 'kemarin') {
+            const yest = new Date(today);
+            yest.setDate(today.getDate() - 1);
+            start = end = yest.toISOString().split('T')[0];
+            label = 'Kemarin';
         } else if (type === 'bulan_ini') {
             start = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-            end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]; label = 'Bulan ini';
+            end = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+            label = 'Bulan ini';
         } else if (type === 'bulan_lalu') {
             start = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-            end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0]; label = 'Bulan lalu';
+            end = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+            label = 'Bulan lalu';
         } else if (type === 'triwulan_ini') {
             const quarter = Math.floor(today.getMonth() / 3);
             start = new Date(today.getFullYear(), quarter * 3, 1).toISOString().split('T')[0];
-            end = new Date(today.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0]; label = 'Triwulan ini';
+            end = new Date(today.getFullYear(), quarter * 3 + 3, 0).toISOString().split('T')[0];
+            label = 'Triwulan ini';
         } else if (type === '7_hari') {
-            const past = new Date(today); past.setDate(today.getDate() - 7);
-            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '7 hari terakhir';
+            const past = new Date(today);
+            past.setDate(today.getDate() - 7);
+            start = past.toISOString().split('T')[0];
+            end = new Date().toISOString().split('T')[0];
+            label = '7 hari terakhir';
         } else if (type === '14_hari') {
-            const past = new Date(today); past.setDate(today.getDate() - 14);
-            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '14 hari terakhir';
+            const past = new Date(today);
+            past.setDate(today.getDate() - 14);
+            start = past.toISOString().split('T')[0];
+            end = new Date().toISOString().split('T')[0];
+            label = '14 hari terakhir';
         } else if (type === '28_hari') {
-            const past = new Date(today); past.setDate(today.getDate() - 28);
-            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '28 hari terakhir';
+            const past = new Date(today);
+            past.setDate(today.getDate() - 28);
+            start = past.toISOString().split('T')[0];
+            end = new Date().toISOString().split('T')[0];
+            label = '28 hari terakhir';
         } else if (type === '30_hari') {
-            const past = new Date(today); past.setDate(today.getDate() - 30);
-            start = past.toISOString().split('T')[0]; end = new Date().toISOString().split('T')[0]; label = '30 hari terakhir';
+            const past = new Date(today);
+            past.setDate(today.getDate() - 30);
+            start = past.toISOString().split('T')[0];
+            end = new Date().toISOString().split('T')[0];
+            label = '30 hari terakhir';
         } else if (type === 'minggu_lalu') {
-            const firstDay = new Date(today); firstDay.setDate(today.getDate() - today.getDay() - 7);
-            const lastDay = new Date(today); lastDay.setDate(today.getDate() - today.getDay() - 1);
-            start = firstDay.toISOString().split('T')[0]; end = lastDay.toISOString().split('T')[0]; label = 'Minggu lalu';
+            const firstDay = new Date(today);
+            firstDay.setDate(today.getDate() - today.getDay() - 7);
+            const lastDay = new Date(today);
+            lastDay.setDate(today.getDate() - today.getDay() - 1);
+            start = firstDay.toISOString().split('T')[0];
+            end = lastDay.toISOString().split('T')[0];
+            label = 'Minggu lalu';
         } else if (type === 'tahun_ini') {
-            start = `${today.getFullYear()}-01-01`; end = `${today.getFullYear()}-12-31`; label = `Tahun ini (${today.getFullYear()})`;
+            start = `${today.getFullYear()}-01-01`;
+            end = `${today.getFullYear()}-12-31`;
+            label = `Tahun ini (${today.getFullYear()})`;
         } else if (type === 'tahun_lalu') {
             const prevYear = today.getFullYear() - 1;
-            start = `${prevYear}-01-01`; end = `${prevYear}-12-31`; label = `Tahun lalu (${prevYear})`;
+            start = `${prevYear}-01-01`;
+            end = `${prevYear}-12-31`;
+            label = `Tahun lalu (${prevYear})`;
         }
 
         elDateStartGlobal.value = start;
         elDateEndGlobal.value = end;
-        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-700"></i> ${label}`;
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-slate-500"></i> ${label}`;
         toggleCalendarPopup();
     }
 
     elDateStartGlobal.addEventListener('change', () => {
-        if(elDateStartGlobal.value && elDateEndGlobal.value) {
-            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-700"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
-        }
-    });
-    elDateEndGlobal.addEventListener('change', () => {
-        if(elDateStartGlobal.value && elDateEndGlobal.value) {
-            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-700"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
+        if (elDateStartGlobal.value && elDateEndGlobal.value) {
+            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-slate-500"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
         }
     });
 
-    // Count-Up Micro-interaction
+    elDateEndGlobal.addEventListener('change', () => {
+        if (elDateStartGlobal.value && elDateEndGlobal.value) {
+            document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-slate-500"></i> ${formatDateID(elDateStartGlobal.value)} - ${formatDateID(elDateEndGlobal.value)}`;
+        }
+    });
+
     function animateValue(el, endVal, duration = 450, isFloat = false, suffix = '') {
         if (!el) return;
         const startVal = 0;
@@ -831,7 +1063,7 @@
     async function initDashboard() {
         elDateStartGlobal.value = '';
         elDateEndGlobal.value = '';
-        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-700"></i> Semua Waktu`;
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-slate-500"></i> Semua Waktu`;
 
         showLoading(true);
         try {
@@ -859,9 +1091,9 @@
         state.filterGlobal.negara = elFilterNegaraGlobal.value;
         state.filterGlobal.startDate = startDate;
         state.filterGlobal.endDate = endDate;
-        
+
         elFilterNegaraTren.value = state.filterGlobal.negara;
-        
+
         let apiUrl = new URL(`${API_BASE}/api/landing`);
         if (startDate && endDate) {
             apiUrl.searchParams.append('start_date', startDate);
@@ -876,10 +1108,10 @@
             state.dataLanding = await response.json();
             populateTrendYearDropdown(state.dataLanding);
             showToast("Filter berhasil diterapkan.", "success");
-        } catch(e) {
+        } catch (e) {
             showToast("Gagal menerapkan filter.", "error");
         }
-        
+
         await applyFiltersToView();
         renderRincianBulananRiil(state.dataLanding.rincian_bulanan);
         renderGrafikTrenRiil();
@@ -887,12 +1119,18 @@
     }
 
     function resetGlobalFilters() {
-        document.getElementById('looker-calendar-popup').classList.remove('active');
-        elFilterNegaraGlobal.value = 'Semua Negara';
-        document.getElementById('preset-dropdown').value = 'semua';
+        const calPopup = document.getElementById('looker-calendar-popup');
+        const countryPopup = document.getElementById('country-select-popup');
+        if (calPopup) calPopup.classList.remove('active');
+        if (countryPopup) countryPopup.classList.add('hidden');
+
+        selectCountryOption('Semua Negara');
+        const presetEl = document.getElementById('preset-dropdown');
+        if (presetEl) presetEl.value = 'semua';
+
         elDateStartGlobal.value = '';
         elDateEndGlobal.value = '';
-        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-teal-700"></i> Semua Waktu`;
+        document.getElementById('looker-date-label').innerHTML = `<i class="fa-regular fa-calendar mr-2 text-slate-500"></i> Semua Waktu`;
 
         state.filterGlobal.negara = 'Semua Negara';
         state.filterGlobal.startDate = '';
@@ -911,14 +1149,14 @@
             await fetch(`${API_BASE}/api/sync`);
             await applyGlobalFilters();
             showToast("Sinkronisasi cloud selesai!", "success");
-        } catch(e) {
+        } catch (e) {
             showToast("Gagal sinkronisasi data dari server.", "error");
         }
         if (iconSync) iconSync.classList.remove('fa-spin');
         if (iconSyncMobile) iconSyncMobile.classList.remove('fa-spin');
         showLoading(false);
     }
-    
+
     function handleModePrioritasChange() {
         const mode = document.getElementById('mode-prioritas-verif').value;
         const elSort = document.getElementById('filter-urutkan-verif');
@@ -941,7 +1179,7 @@
 
     function renderVerifikasi() {
         if (!state.dataLanding || !state.dataLanding.verif) return;
-        
+
         let minVerif = parseInt(document.getElementById('filter-min-verif').value) || 0;
         let sortBy = document.getElementById('filter-urutkan-verif').value;
         let modePrioritas = document.getElementById('mode-prioritas-verif').value;
@@ -1046,17 +1284,36 @@
 
         let htmlRows = '';
         dataVerif.forEach((item, index) => {
+            const pctClamped = Math.max(0, Math.min(100, item.cakupan_pct || 0));
+            let barColor = 'bg-rose-500';
+            if (pctClamped >= 80) barColor = 'bg-emerald-500';
+            else if (pctClamped >= 50) barColor = 'bg-amber-400';
+
+            const endemicBadge = item.penyakit
+                ? `<div class="mt-1"><span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-50 text-amber-800 border border-amber-200"><i class="fa-solid fa-biohazard text-[9px] text-amber-600"></i> ${item.penyakit}</span></div>`
+                : '';
+
             htmlRows += `
-            <tr class="hover:bg-slate-50 transition-colors duration-150">
+            <tr class="group hover:bg-slate-50 transition-colors duration-150">
                 <td class="py-2.5 px-3 text-center text-slate-400 font-semibold">${index + 1}</td>
-                <td class="py-2.5 px-3 font-semibold text-slate-800">${item.negara}</td>
+                <td class="py-2.5 px-3 sticky left-0 bg-white group-hover:bg-slate-50 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+                    <span class="font-semibold text-slate-800">${item.negara}</span>
+                    ${endemicBadge}
+                </td>
                 <td class="py-2.5 px-3 text-right text-slate-600">${typeof item.total_riwayat === 'number' ? item.total_riwayat.toLocaleString('id-ID') : item.total_riwayat}</td>
                 <td class="py-2.5 px-3 text-right font-semibold ${item.kuning > 0 ? 'text-amber-600' : 'text-slate-400'}">${item.kuning.toLocaleString('id-ID')}</td>
                 <td class="py-2.5 px-3 text-right font-bold text-rose-600">${item.verif_merah.toLocaleString('id-ID')}</td>
                 <td class="py-2.5 px-3 text-right font-medium text-slate-700">${item.terverifikasi.toLocaleString('id-ID')}</td>
                 <td class="py-2.5 px-3 text-right font-medium text-slate-700">${item.tidak_respon.toLocaleString('id-ID')}</td>
                 <td class="py-2.5 px-3 text-right text-slate-500">${item.tidak_dilakukan.toLocaleString('id-ID')}</td>
-                <td class="py-2.5 px-3 text-right font-semibold text-slate-700">${item.cakupan_pct.toFixed(2)}%</td>
+                <td class="py-2.5 px-3 text-right">
+                    <div class="inline-flex flex-col items-end gap-1">
+                        <span class="font-semibold text-slate-700">${item.cakupan_pct.toFixed(2)}%</span>
+                        <div class="w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="${barColor} h-full rounded-full" style="width: ${pctClamped}%"></div>
+                        </div>
+                    </div>
+                </td>
                 <td class="py-2.5 px-4 text-[11px] text-slate-600">${item.diagnosis}</td>
             </tr>`;
         });
@@ -1098,12 +1355,14 @@
     }
 
     async function applyFiltersToView() {
-        if(!state.dataLanding) return;
+        if (!state.dataLanding) return;
 
         let sd = state.filterGlobal.startDate;
         let ed = state.filterGlobal.endDate;
         let teksPeriode = (sd && ed) ? `${formatDateID(sd)} - ${formatDateID(ed)}` : "Semua Waktu";
-        
+
+        const elTopPeriode = document.getElementById('text-periode-top');
+        if (elTopPeriode) elTopPeriode.textContent = teksPeriode;
         document.getElementById('text-periode-global').textContent = teksPeriode;
         document.getElementById('badge-periode-rasio').textContent = teksPeriode;
         document.getElementById('badge-periode-verif').textContent = teksPeriode;
@@ -1111,7 +1370,7 @@
         document.getElementById('badge-negara-verif').textContent = state.filterGlobal.negara;
         document.getElementById('badge-negara-tren').textContent = state.filterGlobal.negara;
         document.getElementById('badge-negara-per100k').textContent = state.filterGlobal.negara;
-        document.getElementById('info-rentang-global').innerHTML = `Rentang: <strong class="text-slate-700">${teksPeriode}</strong>`;
+        document.getElementById('info-rentang-global').innerHTML = `Rentang: <strong class="text-slate-800">${teksPeriode}</strong>`;
 
         await syncTerjangkitData(false);
 
@@ -1122,13 +1381,14 @@
     }
 
     function getSummaryCounts(pilihanNegara) {
-        let t = 0, h = 0, k = 0, m = 0;
-        if (!state.dataLanding) return { t, h, k, m };
+        let t = 0, h = 0, k = 0, m = 0, c = 0;
+        if (!state.dataLanding) return { t, h, k, m, c };
         if (pilihanNegara === 'Semua Negara') {
             t = Number(state.dataLanding.total_ppln) || 0;
             h = Number(state.dataLanding.hijau) || 0;
             k = Number(state.dataLanding.kuning) || 0;
             m = Number(state.dataLanding.merah) || 0;
+            c = Number(state.dataLanding.kontak) || 0;
         } else if (Array.isArray(state.dataLanding.negara)) {
             const target = state.dataLanding.negara.find(n => n.negara.toLowerCase() === pilihanNegara.toLowerCase());
             if (target) {
@@ -1136,40 +1396,49 @@
                 h = Number(target.hijau) || 0;
                 k = Number(target.kuning) || 0;
                 m = Number(target.merah) || 0;
+                c = Number(target.kontak) || 0;
             }
         }
-        return { t, h, k, m };
+        return { t, h, k, m, c };
     }
 
     function updateScorecardUtama(pilihanNegara) {
-        const { t, h, k, m } = getSummaryCounts(pilihanNegara);
+        const { t, h, k, m, c } = getSummaryCounts(pilihanNegara);
 
         animateValue(document.getElementById('val-total'), t);
         animateValue(document.getElementById('val-hijau'), h);
         animateValue(document.getElementById('val-kuning'), k);
         animateValue(document.getElementById('val-merah'), m);
-        
-        document.getElementById('pct-hijau').textContent = t > 0 ? ((h/t)*100).toFixed(2) + '%' : '0%';
-        document.getElementById('pct-kuning').textContent = t > 0 ? ((k/t)*100).toFixed(2) + '%' : '0%';
-        document.getElementById('pct-merah').textContent = t > 0 ? ((m/t)*100).toFixed(2) + '%' : '0%';
+        animateValue(document.getElementById('val-kontak'), c);
+
+        const pctH = t > 0 ? (h / t) * 100 : 0;
+        const pctK = t > 0 ? (k / t) * 100 : 0;
+        const pctM = t > 0 ? (m / t) * 100 : 0;
+        const pctC = t > 0 ? (c / t) * 100 : 0;
+
+        document.getElementById('pct-hijau').textContent = t > 0 ? pctH.toFixed(2) + '%' : '0%';
+        document.getElementById('pct-kuning').textContent = t > 0 ? pctK.toFixed(2) + '%' : '0%';
+        document.getElementById('pct-merah').textContent = t > 0 ? pctM.toFixed(2) + '%' : '0%';
+        const elPctKontak = document.getElementById('pct-kontak');
+        if (elPctKontak) elPctKontak.textContent = (t > 0 && c > 0) ? pctC.toFixed(2) + '%' : '0%';
     }
 
     function renderTabelRasio() {
         let minRiwayat = parseInt(document.getElementById('filter-min-riwayat').value) || 0;
         let sortBy = document.getElementById('filter-urutkan').value;
-        
+
         if (!state.dataLanding || !state.dataLanding.negara) return;
-        let dataNegara = [...state.dataLanding.negara]; 
+        let dataNegara = [...state.dataLanding.negara];
 
         if (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") {
             dataNegara = dataNegara.filter(n => n.negara.toLowerCase() === state.filterGlobal.negara.toLowerCase());
+            minRiwayat = 0; // Abaikan batas minimum saat pengguna memilih 1 negara spesifik
         }
 
         let filteredData = [];
         dataNegara.forEach(n => {
-            if(n.total >= minRiwayat) {
-                let rasioVal = n.total > 0 ? (n.merah / n.total) * 105000 / 105000 * 100 : 0; // Fix logic
-                filteredData.push({ ...n, rasio_pct: (n.merah / n.total) * 100 });
+            if (n.total >= minRiwayat) {
+                filteredData.push({ ...n, rasio_pct: n.total > 0 ? (n.merah / n.total) * 100 : 0 });
             }
         });
 
@@ -1183,15 +1452,25 @@
             return;
         }
 
+        const maxRasio = Math.max(...filteredData.map(d => d.rasio_pct), 0.01);
+
         let htmlRows = '';
         filteredData.forEach((item, index) => {
+            const barWidth = Math.min(100, (item.rasio_pct / maxRasio) * 100);
             htmlRows += `
-            <tr class="hover:bg-slate-50 transition-colors duration-150">
+            <tr class="group hover:bg-slate-50 transition-colors duration-150">
                 <td class="py-2.5 px-4 text-center text-slate-400 font-semibold">${index + 1}</td>
-                <td class="py-2.5 px-4 font-semibold text-slate-800">${item.negara}</td>
+                <td class="py-2.5 px-4 font-semibold text-slate-800 sticky left-0 bg-white group-hover:bg-slate-50 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">${item.negara}</td>
                 <td class="py-2.5 px-4 text-right text-slate-600">${item.total.toLocaleString('id-ID')}</td>
                 <td class="py-2.5 px-4 text-right"><span class="${item.merah > 0 ? 'bg-rose-50 text-rose-700 font-bold px-2 py-0.5 rounded border border-rose-200/60' : 'text-slate-400'}">${item.merah.toLocaleString('id-ID')}</span></td>
-                <td class="py-2.5 px-4 text-right font-bold ${item.rasio_pct > 0 ? 'text-slate-800' : 'text-slate-400'}">${item.rasio_pct.toFixed(2)}%</td>
+                <td class="py-2.5 px-4 text-right">
+                    <div class="inline-flex items-center justify-end gap-2">
+                        <div class="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
+                            <div class="bg-rose-500 h-full rounded-full" style="width: ${barWidth}%"></div>
+                        </div>
+                        <span class="font-bold ${item.rasio_pct > 0 ? 'text-slate-800' : 'text-slate-400'}">${item.rasio_pct.toFixed(2)}%</span>
+                    </div>
+                </td>
             </tr>`;
         });
         tbody.innerHTML = htmlRows;
@@ -1218,12 +1497,12 @@
         let hijau = h.toLocaleString('id-ID');
         let kuning = k.toLocaleString('id-ID');
         let merah = m.toLocaleString('id-ID');
-        
+
         let teksPeriode = (sd && ed) ? `${formatDateID(sd)} sampai ${formatDateID(ed)}` : "keseluruhan waktu";
         let teksNegara = (negara && negara !== "Semua Negara") ? `dari negara <strong>${negara}</strong> ` : "";
 
         document.getElementById('ai-text').innerHTML = `
-            <p>Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN) ${teksNegara}pada periode <strong>${teksPeriode}</strong>, tercatat akumulasi sebanyak <strong>${total}</strong> total kedatangan di Bandara Internasional I Gusti Ngurah Rai.</p>
+            <p>Berdasarkan rekapitulasi data Pelaku Perjalanan Luar Negeri (PPLN) ${teksNegara}pada periode <strong>${teksPeriode}</strong>, tercatat akumulasi sebanyak <strong>${total}</strong> total riwayat kedatangan.</p>
             <p>Sebanyak <strong>${hijau}</strong> penumpang berstatus Hijau (Tidak Berisiko), <strong>${kuning}</strong> penumpang memiliki riwayat Daerah Terjangkit (Kuning), dan <strong>${merah}</strong> penumpang berstatus Merah (Bergejala) yang memerlukan verifikasi lanjutan.</p>
         `;
     }
@@ -1231,27 +1510,33 @@
     function populateDropdownNegara(daftarNegara) {
         const currentSelected = elFilterNegaraGlobal.value;
         const currentSelectedTren = elFilterNegaraTren.value;
-        
+
         elFilterNegaraGlobal.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
         elFilterNegaraTren.innerHTML = '<option value="Semua Negara">Semua Negara</option>';
-        
-        if(daftarNegara) {
-            let names = [...new Set(daftarNegara.map(n => n.negara))].sort();
+
+        if (daftarNegara) {
+            let names = [...new Set(daftarNegara.map(n => n.negara))].filter(n => n && n !== 'nan' && n !== '-').sort();
+            daftarNegaraUnique = names;
             names.forEach(n => {
-                if(n && n !== 'nan' && n !== '-') {
-                    let opt1 = document.createElement('option'); opt1.value = n; opt1.textContent = n;
-                    elFilterNegaraGlobal.appendChild(opt1);
-                    let opt2 = document.createElement('option'); opt2.value = n; opt2.textContent = n;
-                    elFilterNegaraTren.appendChild(opt2);
-                }
+                let opt1 = document.createElement('option');
+                opt1.value = n;
+                opt1.textContent = n;
+                elFilterNegaraGlobal.appendChild(opt1);
+
+                let opt2 = document.createElement('option');
+                opt2.value = n;
+                opt2.textContent = n;
+                elFilterNegaraTren.appendChild(opt2);
             });
         }
-        elFilterNegaraGlobal.value = currentSelected;
-        elFilterNegaraTren.value = currentSelectedTren;
+        elFilterNegaraGlobal.value = currentSelected || 'Semua Negara';
+        elFilterNegaraTren.value = currentSelectedTren || 'Semua Negara';
+        renderCountryOptionsList('');
     }
 
     function populateTrendYearDropdown(dataLanding) {
-        const currentVal = elFilterTahunTren.value;
+        const currentValTren = elFilterTahunTren.value;
+
         let years = (dataLanding && Array.isArray(dataLanding.available_years) && dataLanding.available_years.length > 0)
             ? dataLanding.available_years.map(String)
             : ['2026', '2025'];
@@ -1260,23 +1545,46 @@
         years.forEach(y => {
             optionsHtml += `<option value="${y}">Tahun ${y} (Jan - Des)</option>`;
         });
-        elFilterTahunTren.innerHTML = optionsHtml;
 
-        if (currentVal && (currentVal === 'Semua Tahun' || years.includes(currentVal))) {
-            elFilterTahunTren.value = currentVal;
-        } else {
-            elFilterTahunTren.value = 'Semua Tahun';
-        }
+        elFilterTahunTren.innerHTML = optionsHtml;
+        elFilterTahunTren.value = (currentValTren && (currentValTren === 'Semua Tahun' || years.includes(currentValTren)))
+            ? currentValTren
+            : 'Semua Tahun';
     }
 
     function renderRincianBulananRiil(dataRincian) {
         const tbodyPer100k = document.getElementById('tbody-per100k');
         if (!tbodyPer100k) return;
 
-        let sourceData = (state.dataLanding && state.dataLanding.rincian_bulanan) ? state.dataLanding.rincian_bulanan : [];
+        let rawSource = (state.dataLanding && state.dataLanding.rincian_bulanan) ? state.dataLanding.rincian_bulanan : [];
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonthIdx = now.getMonth();
+        const hasManualDateFilter = Boolean(state.filterGlobal.startDate && state.filterGlobal.endDate);
+
+        let sourceData = hasManualDateFilter ? rawSource : rawSource.filter(item => {
+            const yr = Number(item.tahun);
+            const mIdx = getMonthIndex(item.bulan);
+            if (isNaN(yr) || mIdx === -1) return true;
+            if (yr > currentYear) return false;
+            if (yr === currentYear && mIdx > currentMonthIdx) return false;
+            return true;
+        });
 
         if (sourceData.length === 0) {
-            tbodyPer100k.innerHTML = '<tr><td colspan="6" class="py-5 text-center text-slate-400">Tidak ada data.</td></tr>';
+            tbodyPer100k.innerHTML = `<tr><td colspan="6" class="py-5 text-center text-slate-400">Tidak ada data riwayat perjalanan untuk periode ini.</td></tr>`;
+            document.getElementById('card-rate-tinggi').textContent = '0,00';
+            document.getElementById('card-rate-avg').textContent = '0,00';
+            document.getElementById('card-rate-volume').textContent = '0';
+            document.getElementById('card-rate-tinggi-bulan').textContent = '-';
+            document.getElementById('card-rate-volume-bulan').innerHTML = '0 bulan<br class="hidden sm:inline"> data';
+            document.getElementById('ringkasan-kasus-max').textContent = '0 kasus';
+            document.getElementById('ringkasan-kasus-max-bln').textContent = '-';
+            document.getElementById('ringkasan-rate-min').textContent = '0,00';
+            document.getElementById('ringkasan-rate-min-bln').textContent = '-';
+            document.getElementById('ringkasan-tren-akhir').textContent = '0,00%';
+            document.getElementById('ringkasan-tren-akhir-bln').textContent = '-';
             return;
         }
 
@@ -1295,7 +1603,7 @@
         document.getElementById('card-rate-avg').textContent = rateKumulatif.replace('.', ',');
         document.getElementById('card-rate-volume').textContent = totalRiwayatGlobal.toLocaleString('id-ID');
         document.getElementById('card-rate-tinggi-bulan').textContent = `${translateBulan(maxObj.bulan)} ${maxObj.tahun}`;
-        document.getElementById('card-rate-volume-bulan').textContent = `${sourceData.length} bulan`;
+        document.getElementById('card-rate-volume-bulan').innerHTML = `${sourceData.length} bulan<br class="hidden sm:inline"> data`;
 
         document.getElementById('ringkasan-kasus-max').textContent = `${maxObjKasus.bergejala.toLocaleString('id-ID')} kasus`;
         document.getElementById('ringkasan-kasus-max-bln').textContent = `${translateBulan(maxObjKasus.bulan)} ${maxObjKasus.tahun}`;
@@ -1307,21 +1615,25 @@
             let prev = sourceData[sourceData.length - 2];
             let diff = last.per_100k - prev.per_100k;
             let pct = prev.per_100k > 0 ? (diff / prev.per_100k) * 100 : 0;
-            
+
             let elTren = document.getElementById('ringkasan-tren-akhir');
             let iconTren = document.getElementById('icon-tren-akhir');
+            let wrapTren = document.getElementById('wrap-icon-tren-akhir');
             if (diff >= 0) {
                 elTren.textContent = `+${pct.toFixed(2).replace('.', ',')}%`;
-                elTren.className = "text-lg font-extrabold text-rose-600 mt-0.5 tabular-nums";
-                iconTren.className = "fa-solid fa-arrow-trend-up text-rose-600";
-                iconTren.parentElement.className = "w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center text-sm";
+                elTren.className = "text-base font-extrabold text-rose-600 tabular-nums mt-0.5";
+                iconTren.className = "fa-solid fa-arrow-trend-up";
+                if (wrapTren) wrapTren.className = "w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-base shrink-0";
             } else {
                 elTren.textContent = `${pct.toFixed(2).replace('.', ',')}%`;
-                elTren.className = "text-lg font-extrabold text-teal-700 mt-0.5 tabular-nums";
-                iconTren.className = "fa-solid fa-arrow-trend-down text-teal-700";
-                iconTren.parentElement.className = "w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center text-sm";
+                elTren.className = "text-base font-extrabold text-teal-800 tabular-nums mt-0.5";
+                iconTren.className = "fa-solid fa-arrow-trend-down";
+                if (wrapTren) wrapTren.className = "w-11 h-11 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-base shrink-0";
             }
-            document.getElementById('ringkasan-tren-akhir-bln').textContent = `${translateBulan(prev.bulan)} ke ${translateBulan(last.bulan)} ${last.tahun}`;
+            document.getElementById('ringkasan-tren-akhir-bln').textContent = `dari ${translateBulan(prev.bulan)} ke ${translateBulan(last.bulan)} ${last.tahun}`;
+        } else {
+            document.getElementById('ringkasan-tren-akhir').textContent = '0,00%';
+            document.getElementById('ringkasan-tren-akhir-bln').textContent = 'Butuh min. 2 bulan data';
         }
 
         let htmlRows = '';
@@ -1329,20 +1641,22 @@
             let namaBulanIndo = translateBulan(item.bulan);
             htmlRows += `
             <tr class="hover:bg-slate-50 transition-colors duration-150">
-                <td class="py-2.5 px-4 font-medium text-slate-500">${item.tahun}</td>
-                <td class="py-2.5 px-4 font-semibold text-slate-800">${namaBulanIndo}</td>
-                <td class="py-2.5 px-4 text-right text-slate-600">${item.total_riwayat.toLocaleString('id-ID')}</td>
-                <td class="py-2.5 px-4 text-right text-rose-600 font-bold">${item.bergejala.toLocaleString('id-ID')}</td>
-                <td class="py-2.5 px-4 text-right font-bold text-slate-800">${item.per_100k.toFixed(2).replace('.', ',')}</td>
-                <td class="py-2.5 px-4 text-right text-slate-500">${item.persen.toFixed(2).replace('.', ',')}%</td>
+                <td class="py-3 px-4 font-medium text-slate-500">${item.tahun}</td>
+                <td class="py-3 px-4 font-semibold text-slate-800">${namaBulanIndo}</td>
+                <td class="py-3 px-4 text-right text-slate-600">${item.total_riwayat.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right text-rose-600 font-bold">${item.bergejala.toLocaleString('id-ID')}</td>
+                <td class="py-3 px-4 text-right font-bold text-slate-800">${item.per_100k.toFixed(2).replace('.', ',')}</td>
+                <td class="py-3 px-4 text-right text-slate-500">${item.persen.toFixed(2).replace('.', ',')}%</td>
             </tr>`;
         });
         tbodyPer100k.innerHTML = htmlRows;
-        
-        let teksNegara = (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara") ? `dari negara <strong>${state.filterGlobal.negara}</strong> ` : "";
+
+        let teksNegara = (state.filterGlobal.negara && state.filterGlobal.negara !== "Semua Negara")
+            ? `dari negara <strong>${state.filterGlobal.negara}</strong> `
+            : "";
 
         document.getElementById('ai-text-per100k').innerHTML = `
-            <p>Rata-rata kumulatif kasus bergejala di Bandara Internasional I Gusti Ngurah Rai ${teksNegara}berada pada angka <strong>${rateKumulatif.replace('.', ',')}</strong> per 100.000 riwayat kedatangan, dengan proporsi tertinggi pada bulan <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong> (<strong>${maxObj.per_100k.toFixed(2).replace('.', ',')}</strong> per 100.000).</p>
+            <p>Rata-rata kumulatif kasus bergejala ${teksNegara}berada pada angka <strong>${rateKumulatif.replace('.', ',')}</strong> per 100.000 riwayat kedatangan, dengan proporsi tertinggi pada bulan <strong>${translateBulan(maxObj.bulan)} ${maxObj.tahun}</strong> (<strong>${maxObj.per_100k.toFixed(2).replace('.', ',')}</strong> per 100.000).</p>
         `;
 
         document.getElementById('ai-text-rincian').innerHTML = `
@@ -1409,7 +1723,7 @@
                         padding: 10,
                         cornerRadius: 8,
                         callbacks: {
-                            label: function(context) {
+                            label: function (context) {
                                 let val = context.raw;
                                 if (val === null || val === undefined) return null;
                                 return ` ${context.dataset.label}: ${val.toLocaleString('id-ID')} kasus`;
@@ -1430,15 +1744,15 @@
     async function renderGrafikTrenRiil() {
         const negara = elFilterNegaraTren.value;
         const tahun = elFilterTahunTren.value;
-        
+
         showLoading(true);
         try {
             let apiUrl = new URL(`${API_BASE}/api/landing`);
             if (negara && negara !== "Semua Negara") apiUrl.searchParams.append('negara', negara);
-            
+
             const response = await fetch(apiUrl);
             const result = await response.json();
-            
+
             document.getElementById('badge-negara-tren').textContent = negara;
 
             if (chartTrenInstance) {
@@ -1489,21 +1803,24 @@
             : `Belum terdapat data puncak kasus untuk kriteria filter ini.`;
 
         document.getElementById('ai-text-tren').innerHTML = `
-            <p>Pemantauan tren kedatangan PPLN di Bandara Internasional I Gusti Ngurah Rai ${subjekNegara} menunjukkan dinamika jumlah penumpang bergejala setiap bulannya.</p>
+            <p>Pemantauan tren kedatangan PPLN ${subjekNegara} menunjukkan dinamika jumlah penumpang bergejala setiap bulannya.</p>
             <p>${infoPuncak}</p>
         `;
     }
 
     function setWaktuDimuat() {
         const now = new Date();
-        const formatStr = now.toLocaleString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second:'2-digit' }).replace(/\./g, ':');
-        document.getElementById('info-dimuat-global').innerHTML = `Dimuat: <strong class="text-slate-700">${formatStr}</strong>`;
+        const formatStr = now.toLocaleString('id-ID', {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }).replace(/\./g, ':');
+        document.getElementById('info-dimuat-global').innerHTML = `Dimuat: <strong class="text-slate-800">${formatStr}</strong>`;
     }
 
     function formatDateID(dateStr) {
-        if(!dateStr) return '';
+        if (!dateStr) return '';
         const d = new Date(dateStr);
-        return d.toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     function showLoading(show) {

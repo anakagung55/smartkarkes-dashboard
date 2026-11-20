@@ -23,26 +23,30 @@
 <body class="bg-slate-50 min-h-screen flex flex-col relative antialiased text-slate-800">
 
     <!-- HEADER SI-VERA -->
-    <header class="bg-teal-900 text-white shadow-sm sticky top-0 z-50 border-b border-teal-800/80">
-        <div class="max-w-7xl mx-auto py-3 px-4 sm:px-6 flex items-center justify-between gap-3">
-            <!-- Brand Lockup -->
-            <div class="flex items-center gap-3.5">
-                <div id="brand-logo-container" class="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-teal-300 text-lg flex-shrink-0 shadow-inner">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <div>
+    <!-- HEADER SI-VERA -->
+    <header class="bg-[#05443c] text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Brand Lockup (Mengarah ke index.html) -->
+            <div class="flex items-center gap-4">
+                <!-- Kapsul Logo SIVERA (Zoom Optimal) -->
+                <a href="index.html" class="bg-white w-44 sm:w-48 h-10 sm:h-11 rounded-full shadow-xs flex items-center justify-center shrink-0 select-none overflow-hidden border border-teal-700/20 hover:opacity-95 transition-opacity">
+                    <img src="assets/logo-sivera.png" alt="Logo SIVERA" class="h-full w-auto object-contain scale-[2.25]">
+                </a>
+                <div class="h-7 w-[1px] bg-teal-700/80 hidden sm:block"></div>
+                <div class="hidden sm:block">
                     <div class="flex items-center gap-2">
-                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white leading-none">SI-VERA</h1>
-                        <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-rose-500/20 text-rose-200 rounded border border-rose-400/30">Status Merah</span>
+                        <span class="text-xs font-bold text-white leading-tight">Dashboard Verifikasi PPLN Status Merah</span>
+                        <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-rose-500/20 text-rose-200 rounded border border-rose-400/30">Status Merah</span>
                     </div>
-                    <p class="text-[11px] text-teal-200/90 mt-1 leading-tight">Dashboard Verifikasi PPLN Status Merah — BBKK Denpasar</p>
+                    <p class="text-[11px] text-teal-100/80 mt-0.5 leading-tight">Balai Besar Kekarantinaan Kesehatan (BBKK) Denpasar</p>
                 </div>
             </div>
 
-            <button onclick="window.close()" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3.5 py-2 rounded-lg font-medium transition-colors border border-white/15 flex items-center gap-1.5">
-                <i class="fa-solid fa-xmark text-xs"></i>
-                <span>Tutup Tab</span>
-            </button>
+            <!-- Navigasi Kembali ke Halaman Utama -->
+            <a href="index.html" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#0b5c51] hover:bg-[#0e6e61] text-white border border-teal-600/60 transition-colors shrink-0">
+                <i class="fa-solid fa-arrow-left text-[11px] text-teal-200"></i>
+                <span>Beranda Utama</span>
+            </a>
         </div>
     </header>
 
