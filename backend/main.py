@@ -15,7 +15,6 @@ from contextlib import asynccontextmanager
 
 load_dotenv()
 
-# Pindahkan URL sensitif & Secret Key ke Environment Variables di Render!
 SHEET_CSV_URL = os.getenv(
     "SHEET_CSV_URL",
     "https://docs.google.com/spreadsheets/d/1fqp6xsIxYOkF-SWaEUBae1pW7BKu9RMiI7xyjOuvB5o/gviz/tq?tqx=out:csv&sheet=MERAH"
@@ -24,12 +23,13 @@ LANDING_SHEET_URL = os.getenv(
     "LANDING_SHEET_URL",
     "https://docs.google.com/spreadsheets/d/1p-QhV_ZgbLqKy77DWtdwCsUVcdOPauA9UMfMeb8c7NQ/gviz/tq?tqx=out:csv&sheet=Sheet1"
 )
-ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")  # Set di Render Environment Variables!
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
 TERJANGKIT_JSON_PATH = "negara_terjangkit.json"
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024  # Maksimal 2 MB per upload Excel
 
 CACHE_LANDING_DF = None
 CACHE_MERAH_DF = None
+ALL_VALID_COUNTRIES = set()
 DATA_LOCK = threading.Lock()
 TERJANGKIT_LOCK = threading.Lock()
 
@@ -259,6 +259,9 @@ def process_landing_data(df):
     df.columns = df.columns.str.strip().str.replace('\ufeff', '')
     if 'Tanggal' in df.columns:
         df['parsed_date'] = pd.to_datetime(df['Tanggal'], errors='coerce', dayfirst=True)
+    negara_col = next((c for c in df.columns if 'negara' in c.lower()), None)
+    if negara_col:
+        df[negara_col] = df[negara_col].astype(str).str.strip()
     return df
 
 
@@ -281,13 +284,27 @@ def process_merah_data(df):
     return df
 
 
+def extract_country_set_from_df(df) -> set:
+    if df is None or df.empty:
+        return set()
+    nc = next((c for c in df.columns if 'negara' in c.lower()), None)
+    if not nc:
+        return set()
+    return {
+        val for val in df[nc].dropna().astype(str).str.strip().unique()
+        if val and val.lower() not in ['nan', '-', '']
+    }
+
+
 def force_load_all_data():
-    global CACHE_LANDING_DF, CACHE_MERAH_DF
+    global CACHE_LANDING_DF, CACHE_MERAH_DF, ALL_VALID_COUNTRIES
     with DATA_LOCK:
         if CACHE_LANDING_DF is not None and not CACHE_LANDING_DF.empty and CACHE_MERAH_DF is not None and not CACHE_MERAH_DF.empty:
             return
         try:
-            CACHE_LANDING_DF = process_landing_data(pd.read_csv(LANDING_SHEET_URL))
+            df_l = process_landing_data(pd.read_csv(LANDING_SHEET_URL))
+            CACHE_LANDING_DF = df_l
+            ALL_VALID_COUNTRIES = extract_country_set_from_df(df_l)
         except Exception:
             if CACHE_LANDING_DF is None:
                 CACHE_LANDING_DF = pd.DataFrame()
@@ -308,7 +325,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Backend SIVERA",
-    docs_url=None,     # Matikan /docs publik di production agar struktur API tidak diekspos
+    docs_url=None,
     redoc_url=None,
     lifespan=lifespan
 )
@@ -335,24 +352,25 @@ def get_cached_landing_df():
     if CACHE_LANDING_DF is None or CACHE_LANDING_DF.empty:
         force_load_all_data()
     with DATA_LOCK:
-        return CACHE_LANDING_DF.copy()
+        return CACHE_LANDING_DF
 
 
 def get_cached_merah_df():
     if CACHE_MERAH_DF is None or CACHE_MERAH_DF.empty:
         force_load_all_data()
     with DATA_LOCK:
-        return CACHE_MERAH_DF.copy()
+        return CACHE_MERAH_DF
 
 
 def update_cache_background():
-    global CACHE_LANDING_DF, CACHE_MERAH_DF
+    global CACHE_LANDING_DF, CACHE_MERAH_DF, ALL_VALID_COUNTRIES
     try:
         new_landing = process_landing_data(pd.read_csv(LANDING_SHEET_URL))
         new_merah = process_merah_data(pd.read_csv(SHEET_CSV_URL))
         with DATA_LOCK:
             if not new_landing.empty:
                 CACHE_LANDING_DF = new_landing
+                ALL_VALID_COUNTRIES = extract_country_set_from_df(new_landing)
             if not new_merah.empty:
                 CACHE_MERAH_DF = new_merah
     except Exception:
@@ -407,14 +425,17 @@ def extract_valid_countries(raw_str: str, valid_countries: set, country_alias_ma
             res.append(c)
     return res
 
+
 @app.get("/")
 def root():
     return {"service": "Backend SIVERA", "status": "running"}
+
 
 @app.get("/api/health")
 def health_check():
     """Endpoint ringan untuk UptimeRobot ping agar Render tidak sleep."""
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
 
 @app.post("/api/verify-pin", dependencies=[Depends(verify_admin_key)])
 def verify_admin_pin():
@@ -449,14 +470,10 @@ def get_terjangkit_list(periode: Optional[str] = None):
         for k, v in sorted(countries_dict.items(), key=lambda x: x[0].lower())
     ]
 
-    known_countries = set(countries_dict.keys())
-    df_landing = get_cached_landing_df()
-    if not df_landing.empty:
-        nc = next((c for c in df_landing.columns if 'negara' in c.lower()), None)
-        if nc:
-            for val in df_landing[nc].dropna().astype(str).str.strip().unique():
-                if val and val.lower() not in ['nan', '-', '']:
-                    known_countries.add(val)
+    known_countries = set(countries_dict.keys()) | ALL_VALID_COUNTRIES
+    if not ALL_VALID_COUNTRIES:
+        df_landing = get_cached_landing_df()
+        known_countries |= extract_country_set_from_df(df_landing)
 
     return {
         "selected_periode": selected_periode,
@@ -610,6 +627,7 @@ def delete_terjangkit_periode(periode: str):
     save_terjangkit_store(store)
     return {"status": "success", "message": f"Periode {periode} berhasil dihapus permanen."}
 
+
 @app.get("/api/terjangkit/backup-json", dependencies=[Depends(verify_admin_key)])
 def backup_terjangkit_json():
     """Mengunduh seluruh isi negara_terjangkit.json (semua periode) dari server Render."""
@@ -632,6 +650,7 @@ async def restore_terjangkit_json(file: UploadFile = File(...)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="File bukan format JSON yang valid.")
 
+
 @app.get("/api/sync")
 def sync_data(background_tasks: BackgroundTasks):
     background_tasks.add_task(update_cache_background)
@@ -641,10 +660,13 @@ def sync_data(background_tasks: BackgroundTasks):
 @app.get("/api/landing")
 def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] = None, negara: Optional[str] = None):
     try:
-        df_landing = get_cached_landing_df()
-        if df_landing.empty:
+        df_landing_base = get_cached_landing_df()
+        if df_landing_base is None or df_landing_base.empty:
             raise HTTPException(status_code=503, detail="Data sedang dimuat dari sumber, silakan coba beberapa saat lagi.")
 
+        valid_countries = ALL_VALID_COUNTRIES if ALL_VALID_COUNTRIES else extract_country_set_from_df(df_landing_base)
+
+        df_landing = df_landing_base
         if 'parsed_date' in df_landing.columns and start_date and end_date:
             s_date = pd.to_datetime(start_date, errors='coerce')
             e_date = pd.to_datetime(end_date, errors='coerce')
@@ -658,22 +680,19 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         hijau = int(df_landing['Tidak Berisiko'].sum()) if 'Tidak Berisiko' in df_landing.columns else 0
 
         landing_total_map = {}
-        valid_countries = set()
         negara_col = next((c for c in df_landing.columns if 'negara' in c.lower()), None)
         negara_data = []
 
         if negara_col:
-            df_landing[negara_col] = df_landing[negara_col].astype(str).str.strip()
-            df_negara = df_landing.groupby(negara_col).agg({
+            df_negara = df_landing.groupby(negara_col, as_index=False).agg({
                 'Total Isian': 'sum', 'Berisiko': 'sum', 'Daerah Terjangkit': 'sum', 'Tidak Berisiko': 'sum'
-            }).reset_index().sort_values(by='Total Isian', ascending=False)
+            }).sort_values(by='Total Isian', ascending=False)
 
             for _, row in df_negara.iterrows():
-                n_name = str(row[negara_col])
+                n_name = str(row[negara_col]).strip()
                 t_val = int(row['Total Isian']) if 'Total Isian' in row else 0
                 if n_name and n_name.lower() not in ['nan', '-', '']:
                     landing_total_map[n_name.lower()] = t_val
-                    valid_countries.add(n_name)
                     negara_data.append({
                         "negara": n_name,
                         "total": t_val,
@@ -685,10 +704,9 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         df_merah = get_cached_merah_df()
         n_col = 'Riwayat perjalanan1' if 'Riwayat perjalanan1' in df_merah.columns else (df_merah.columns[3] if len(df_merah.columns) > 3 else None)
 
-        df_trend = df_merah.copy()
+        df_trend = df_merah
         if negara and negara != "Semua Negara" and n_col:
-            # regex=False mencegah serangan ReDoS dari input parameter negara
-            df_trend = df_trend[df_trend[n_col].astype(str).str.contains(negara, case=False, na=False, regex=False)]
+            df_trend = df_merah[df_merah[n_col].astype(str).str.contains(negara, case=False, na=False, regex=False)]
 
         def build_yearly_trend(year: int) -> list:
             if 'trend_year' not in df_merah.columns:
@@ -705,41 +723,41 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
         available_years_set = set()
         if 'trend_year' in df_merah.columns:
             available_years_set.update(int(y) for y in df_merah['trend_year'].dropna().unique())
-        if 'parsed_date' in df_landing.columns:
-            available_years_set.update(int(y) for y in df_landing['parsed_date'].dt.year.dropna().unique())
+        if 'parsed_date' in df_landing_base.columns:
+            available_years_set.update(int(y) for y in df_landing_base['parsed_date'].dt.year.dropna().unique())
 
         available_years = sorted(list(available_years_set), reverse=True) if available_years_set else [2026, 2025]
-
         tren_tahunan = {str(yr): build_yearly_trend(yr) for yr in available_years}
 
         rincian_bulanan_data = []
-        df_rincian = df_landing.copy()
+        df_rincian = df_landing
         if negara and negara != "Semua Negara" and negara_col:
-            df_rincian = df_rincian[df_rincian[negara_col].astype(str).str.strip().str.lower() == negara.lower()]
+            df_rincian = df_rincian[df_rincian[negara_col].astype(str).str.lower() == negara.lower()]
 
         if 'parsed_date' in df_rincian.columns and 'Total Isian' in df_rincian.columns and 'Berisiko' in df_rincian.columns:
-            df_valid_rincian = df_rincian.dropna(subset=['parsed_date']).copy()
-            df_monthly = (
-                df_valid_rincian
-                .groupby(df_valid_rincian['parsed_date'].dt.to_period('M'))
-                .agg({'Total Isian': 'sum', 'Berisiko': 'sum'})
-                .reset_index()
-                .sort_values(by='parsed_date', ascending=True)
-            )
-            for _, row in df_monthly.iterrows():
-                p_date = row['parsed_date']
-                if pd.isna(p_date):
-                    continue
-                tot_is, mer_is = int(row['Total Isian']), int(row['Berisiko'])
-                rincian_bulanan_data.append({
-                    "tahun": str(p_date.year),
-                    "bulan": p_date.strftime('%B'),
-                    "tahun_bulan": p_date.strftime('%B %Y'),
-                    "total_riwayat": tot_is,
-                    "bergejala": mer_is,
-                    "per_100k": round((mer_is / tot_is * 100000), 2) if tot_is > 0 else 0.0,
-                    "persen": round((mer_is / tot_is * 100), 2) if tot_is > 0 else 0.0
-                })
+            df_valid_rincian = df_rincian.dropna(subset=['parsed_date'])
+            if not df_valid_rincian.empty:
+                df_monthly = (
+                    df_valid_rincian
+                    .groupby(df_valid_rincian['parsed_date'].dt.to_period('M'))
+                    .agg({'Total Isian': 'sum', 'Berisiko': 'sum'})
+                    .reset_index()
+                    .sort_values(by='parsed_date', ascending=True)
+                )
+                for _, row in df_monthly.iterrows():
+                    p_date = row['parsed_date']
+                    if pd.isna(p_date):
+                        continue
+                    tot_is, mer_is = int(row['Total Isian']), int(row['Berisiko'])
+                    rincian_bulanan_data.append({
+                        "tahun": str(p_date.year),
+                        "bulan": p_date.strftime('%B'),
+                        "tahun_bulan": p_date.strftime('%B %Y'),
+                        "total_riwayat": tot_is,
+                        "bergejala": mer_is,
+                        "per_100k": round((mer_is / tot_is * 100000), 2) if tot_is > 0 else 0.0,
+                        "persen": round((mer_is / tot_is * 100), 2) if tot_is > 0 else 0.0
+                    })
 
         verif_data = []
         h_col = next((c for c in df_merah.columns if 'verifikasi' in c.lower() or 'hasil' in c.lower()), None)
@@ -747,7 +765,7 @@ def get_landing_stats(start_date: Optional[str] = None, end_date: Optional[str] 
 
         if n_col and h_col:
             country_stats = {}
-            df_merah_verif = df_merah.copy()
+            df_merah_verif = df_merah
             if 'parsed_date' in df_merah_verif.columns and start_date and end_date:
                 s_date = pd.to_datetime(start_date, errors='coerce')
                 e_date = pd.to_datetime(end_date, errors='coerce')
@@ -822,7 +840,7 @@ class FilterRequest(BaseModel):
 @app.post("/api/stats")
 def get_filtered_stats(req: FilterRequest):
     df_global = get_cached_merah_df()
-    if df_global.empty:
+    if df_global is None or df_global.empty:
         raise HTTPException(status_code=503, detail="Data sedang dimuat.")
 
     tanggal_terakhir = "28/10/2026"
@@ -850,12 +868,11 @@ def get_filtered_stats(req: FilterRequest):
         d_series = d_series[~d_series.isin(['-', '', 'A', 'a', 'nan', 'NaN'])]
         fixed_top_diag = [k for k, _ in d_series.value_counts().head(10).items()]
 
-    df_filtered = df_global.copy()
+    df_filtered = df_global
     n_col_stats = next((c for c in df_filtered.columns if 'riwayat' in c.lower() or 'negara' in c.lower()), None)
     if not n_col_stats and len(df_filtered.columns) > 3:
         n_col_stats = df_filtered.columns[3]
 
-    # Pastikan regex=False di semua .str.contains agar aman dari ReDoS
     if req.negara and req.negara != "Semua Negara" and n_col_stats:
         df_filtered = df_filtered[df_filtered[n_col_stats].astype(str).str.contains(req.negara, case=False, na=False, regex=False)]
 
@@ -902,13 +919,7 @@ def get_filtered_stats(req: FilterRequest):
 
     top_negara_data = []
     if n_col_stats:
-        df_landing_ref = get_cached_landing_df()
-        valid_set = set()
-        if not df_landing_ref.empty:
-            nc = next((c for c in df_landing_ref.columns if 'negara' in c.lower()), None)
-            if nc:
-                valid_set = set(df_landing_ref[nc].dropna().astype(str).str.strip())
-
+        valid_set = ALL_VALID_COUNTRIES if ALL_VALID_COUNTRIES else extract_country_set_from_df(get_cached_landing_df())
         all_n = []
         for val in df_filtered[n_col_stats].dropna():
             all_n.extend(extract_valid_countries(val, valid_set, COUNTRY_ALIASES))
