@@ -258,7 +258,13 @@ def parse_terjangkit_excel(file_bytes: bytes, filename: str) -> dict:
 def process_landing_data(df):
     df.columns = df.columns.str.strip().str.replace('\ufeff', '')
     if 'Tanggal' in df.columns:
-        df['parsed_date'] = pd.to_datetime(df['Tanggal'], errors='coerce', dayfirst=True)
+        df['parsed_date'] = pd.to_datetime(df['Tanggal'], format='ISO8601', errors='coerce')
+        # Fallback jika ada baris yang memakai format DD/MM/YYYY
+        mask_na = df['parsed_date'].isna()
+        if mask_na.any():
+            df.loc[mask_na, 'parsed_date'] = pd.to_datetime(
+                df.loc[mask_na, 'Tanggal'], errors='coerce', dayfirst=True
+            )
     negara_col = next((c for c in df.columns if 'negara' in c.lower()), None)
     if negara_col:
         df[negara_col] = df[negara_col].astype(str).str.strip()
